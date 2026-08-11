@@ -1,0 +1,84 @@
+'use strict';
+const fs=require('node:fs');
+const os=require('node:os');
+const path=require('node:path');
+const assert=require('node:assert/strict');
+
+const root=path.resolve(__dirname,'..');
+const read=f=>fs.readFileSync(path.join(root,f),'utf8');
+const pkg=JSON.parse(read('package.json'));
+const server=read('server.js');
+const dbSource=read('lib/db.js');
+const galleryHtml=read('public/gallery.html');
+const galleryJs=read('public/gallery.js');
+const contactHtml=read('public/contact.html');
+const contactJs=read('public/contact.js');
+const adminHtml=read('public/admin.html');
+const adminJs=read('public/admin.js');
+const publicUi=read('public/public-ui.js');
+const css=read('public/styles.css');
+
+assert.match(pkg.version,/^1\.0\.(?:22|23)$/);
+assert.match(dbSource,/CREATE TABLE IF NOT EXISTS gallery_videos/);
+assert.match(dbSource,/CREATE TABLE IF NOT EXISTS contact_people/);
+assert.match(dbSource,/phone_content TEXT NOT NULL DEFAULT '\[\]'/);
+assert.match(server,/\/api\/public\/contact/);
+assert.match(server,/\/api\/admin\/gallery\/videos/);
+assert.match(server,/if \(!canManageGallery\(actor\)\) return forbidden\(res\);[\s\S]{0,260}deleteGalleryVideo/,'Gallery-permitted user must be allowed to delete video');
+assert.match(server,/\/api\/admin\/contacts/);
+assert.match(server,/UPLOAD_LAYOUT\.contacts/);
+assert.match(server,/UPLOAD_LAYOUT\.temple/);
+assert.match(server,/youtube-nocookie\.com/);
+assert.match(server,/frame-src https:\/\/www\.youtube-nocookie\.com https:\/\/www\.google\.com/);
+assert.match(galleryHtml,/id="galleryVideosTab"/);
+assert.match(galleryHtml,/id="galleryVideoPagination"/);
+assert.match(galleryHtml,/id="gallerySlideshow"/);
+assert.match(galleryJs,/videoPageSize:100/);
+assert.match(galleryJs,/setInterval\(\(\)=>stepLightbox\(1\),3500\)/);
+assert.match(galleryJs,/G\.index=\(G\.index\+delta\+G\.photos\.length\)%G\.photos\.length/,'Slideshow/next must loop from last photo to first');
+assert.match(contactHtml,/id="contactMapFrame"/);
+assert.match(contactHtml,/id="contactTemple(?:Image|Grid)"/);
+assert.match(contactHtml,/data-shared-fund/);
+assert.match(contactHtml,/id="contactTrafficStats"/);
+assert.match(contactJs,/GiaPhaPublicUI\.renderRich/);
+assert.match(contactJs,/data-phone=/,'Contact phone must support rich text display');
+assert.match(adminHtml,/id="galleryVideoModalAdmin"/);
+assert.match(adminHtml,/id="contactModal"/);
+assert.match(adminHtml,/id="contactPhoneEditorHost"/);
+assert.match(adminJs,/contactPhoneEditor/);
+assert.match(adminJs,/phone_content:JSON\.stringify\(phoneTokens\)/);
+assert.match(publicUi,/renderSharedFooter/);
+assert.match(css,/\.gallery-video-card/);
+assert.match(css,/\.contact-person-card:hover/);
+assert.match(css,/\.contact-temple-card:hover/);
+
+const tmp=fs.mkdtempSync(path.join(os.tmpdir(),'gia-pha-v1022-'));
+process.env.DATA_DIR=path.join(tmp,'data');
+let store;
+try{
+  const {Store,UPLOAD_LAYOUT}=require('../lib/db');
+  store=new Store();
+  const admin=store.ensureAdmin('admin','Regression-Password-2026!',false);
+  const manager=store.createUser({username:'mediauser',display_name:'Media User',password:'Regression-Password-2026!',role:'viewer',can_manage_gallery:true},admin.id);
+  const video=store.createGalleryVideo({title:'Giỗ Tổ 2026',youtube_url:'https://youtu.be/dQw4w9WgXcQ',youtube_id:'dQw4w9WgXcQ',is_public:true},manager.id);
+  assert.equal(video.youtube_id,'dQw4w9WgXcQ');
+  assert.equal(video.embed_url,'https://www.youtube-nocookie.com/embed/dQw4w9WgXcQ');
+  assert.equal(store.listGalleryVideos({publicOnly:true}).length,1);
+  store.updateGalleryVideo(video.id,{title:'Giỗ Tổ 2026 - bản mới'},manager.id);
+  assert.equal(store.getGalleryVideo(video.id).title,'Giỗ Tổ 2026 - bản mới');
+  assert.equal(store.deleteGalleryVideo(video.id,manager.id).id,video.id);
+
+  const rich=(text,extra={})=>JSON.stringify([{text,bold:false,italic:false,underline:false,strike:false,color:'',font:'system',size:15,align:'left',...extra}]);
+  const contact=store.createContact({name_text:'Nguyễn Tiến A',name_content:rich('Nguyễn Tiến A',{bold:true,size:22}),phone:'0989 871 186',phone_content:rich('0989 871 186',{color:'#8b5e20'}),address_content:rich('Làng Ngọc Mạch\nHà Nội'),image_path:`${UPLOAD_LAYOUT.contacts}/contact-test.jpg`,is_public:true},admin.id);
+  assert.equal(contact.phone,'0989 871 186');
+  assert.match(contact.phone_content,/0989 871 186/);
+  assert.equal(store.listContacts({publicOnly:true}).length,1);
+  store.updateContact(contact.id,{phone:'0900 000 000',phone_content:rich('0900 000 000',{bold:true})},admin.id);
+  assert.equal(store.getContact(contact.id).phone,'0900 000 000');
+  assert.match(store.getContact(contact.id).phone_content,/0900 000 000/);
+  assert.equal(store.deleteContact(contact.id,admin.id).id,contact.id);
+
+  const dirs=[UPLOAD_LAYOUT.contacts,UPLOAD_LAYOUT.temple].map(d=>path.join(process.env.DATA_DIR,'uploads',d));
+  dirs.forEach(d=>assert.equal(fs.existsSync(d),true,`upload folder missing: ${d}`));
+  console.log('v1022-video-contact-regression: OK');
+} finally { try{store?.db?.close();}catch{} fs.rmSync(tmp,{recursive:true,force:true}); }

@@ -1,0 +1,97 @@
+<!doctype html>
+<html lang="vi">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+  <meta name="description" content="Thư viện ảnh gia đình - lưu giữ hình ảnh, sự kiện và ký ức qua các thế hệ.">
+  <title>Thư viện ảnh · Cây Gia Phả</title>
+  <link rel="icon" href="/assets/logo.png">
+  <link rel="stylesheet" href="/styles.css?v=1.0.23">
+</head>
+<body class="public-page gallery-page">
+  <div class="ambient ambient-a"></div><div class="ambient ambient-b"></div>
+  <header class="site-header gallery-site-header">
+    <a class="brand" href="/" aria-label="Về cây gia phả">
+      <img src="/assets/logo.png" alt="Logo gia phả" class="brand-logo" id="galleryBrandLogo">
+      <span class="brand-copy"><small class="brand-label">Gia Phả</small><strong id="galleryClanName">Gia đình</strong></span>
+    </a>
+    <nav class="header-actions" aria-label="Điều hướng">
+      <a class="gallery-header-link" href="/">Cây gia phả</a>
+      <a class="gallery-header-link" href="/contact.html">Liên hệ</a>
+      <a class="admin-link" href="/admin.html">Quản trị <span>↗</span></a>
+    </nav>
+  </header>
+
+  <main class="gallery-main">
+    <section class="gallery-hero">
+      <div class="hero-kicker"><span class="kicker-dot"></span> Ký ức bằng hình ảnh</div>
+      <h1>Thư Viện Ảnh</h1>
+      <div class="gallery-intro public-rich-text" id="galleryIntro">Những khoảnh khắc của gia đình, dòng họ và các thế hệ được lưu giữ trong từng khung hình.</div>
+      <div class="gallery-media-tabs" role="tablist" aria-label="Loại nội dung thư viện"><button class="active" type="button" id="galleryPhotosTab" data-gallery-tab="photos">▦ Thư mục ảnh</button><button type="button" id="galleryVideosTab" data-gallery-tab="videos">▶ Video</button></div>
+      <label class="gallery-search" id="gallerySearchWrap"><span>⌕</span><input id="gallerySearch" type="search" autocomplete="off" placeholder="Tìm thư mục ảnh…"></label>
+    </section>
+
+    <section class="gallery-overview" id="galleryOverview" aria-live="polite">
+      <div class="gallery-overview-head"><div><span class="eyebrow">Bộ sưu tập</span><h2>Các thư mục ảnh</h2></div><span class="gallery-count" id="galleryAlbumCount">0 thư mục</span></div>
+      <div class="gallery-album-grid" id="galleryAlbumGrid"></div>
+      <div class="gallery-public-empty hidden" id="galleryEmpty"><div>▦</div><h3>Chưa có ảnh trong thư viện</h3><p>Khi quản trị viên hoặc người được cấp quyền thêm thư mục ảnh, nội dung sẽ xuất hiện tại đây.</p></div>
+    </section>
+
+    <section class="gallery-video-overview hidden" id="galleryVideoOverview" aria-live="polite">
+      <div class="gallery-overview-head"><div><span class="eyebrow">Video</span><h2>Video dòng họ</h2></div><span class="gallery-count" id="galleryVideoCount">0 video</span></div>
+      <div class="gallery-video-grid" id="galleryVideoGrid"></div>
+      <div class="people-pagination gallery-public-pagination" id="galleryVideoPagination">
+        <div class="people-page-info" id="galleryVideoPageInfo">0 video</div>
+        <div class="people-page-controls"><button class="page-btn" type="button" id="galleryVideoFirstPage">Đầu</button><button class="page-btn" type="button" id="galleryVideoPrevPage">← Lùi</button><label class="page-jump">Trang <input id="galleryVideoPageInput" type="number" min="1" value="1"><span id="galleryVideoPageTotal">/ 1</span></label><button class="page-btn" type="button" id="galleryVideoNextPage">Tiến →</button><button class="page-btn" type="button" id="galleryVideoLastPage">Cuối</button></div>
+      </div>
+      <div class="gallery-public-empty hidden" id="galleryVideoEmpty"><div>▶</div><h3>Chưa có video</h3><p>Video YouTube được thêm từ trang quản trị sẽ hiển thị tại đây.</p></div>
+    </section>
+
+    <section class="gallery-album-view hidden" id="galleryAlbumView">
+      <button class="gallery-back" id="galleryBack" type="button">← Tất cả thư mục</button>
+      <div class="gallery-album-hero">
+        <div><span class="eyebrow">Thư mục ảnh</span><h2 id="galleryAlbumTitle">—</h2><p id="galleryAlbumDescription"></p></div>
+        <span class="gallery-count" id="galleryPhotoCount">0 ảnh</span>
+      </div>
+      <div class="gallery-photo-grid" id="galleryPhotoGrid"></div>
+      <div class="people-pagination gallery-public-pagination" id="galleryPhotoPagination">
+        <div class="people-page-info" id="galleryPhotoPageInfo">0 ảnh</div>
+        <div class="people-page-controls">
+          <button class="page-btn" type="button" id="galleryPhotoFirstPage">Đầu</button>
+          <button class="page-btn" type="button" id="galleryPhotoPrevPage">← Lùi</button>
+          <label class="page-jump">Trang <input id="galleryPhotoPageInput" type="number" min="1" value="1"><span id="galleryPhotoPageTotal">/ 1</span></label>
+          <button class="page-btn" type="button" id="galleryPhotoNextPage">Tiến →</button>
+          <button class="page-btn" type="button" id="galleryPhotoLastPage">Cuối</button>
+        </div>
+      </div>
+      <div class="gallery-public-empty hidden" id="galleryPhotoEmpty"><div>⌑</div><h3>Thư mục chưa có ảnh</h3><p>Hãy quay lại sau khi ảnh được cập nhật.</p></div>
+    </section>
+  </main>
+
+  <footer class="site-footer gallery-footer">
+    <div class="footer-summary public-rich-text" id="galleryFooterContent">Cây gia phả · Thư viện ký ức gia đình.</div>
+    <section class="fund-support hidden" data-shared-fund aria-label="Ủng hộ quỹ dòng họ"><div class="fund-support-glow" aria-hidden="true"></div><div class="fund-support-qr-wrap" data-fund-qr-wrap><div class="fund-support-qr-frame"><img data-fund-qr alt="Mã QR ủng hộ quỹ dòng họ"></div><span class="fund-support-scan">Quét mã để ủng hộ</span></div><div class="fund-support-copy"><span class="fund-support-kicker">Chung tay gìn giữ nguồn cội</span><h2 data-fund-title>Ủng hộ quỹ dòng họ</h2><div class="fund-support-content public-rich-text" data-fund-content></div></div></section>
+    <div class="traffic-row footer-traffic" id="galleryTrafficStats" aria-live="polite"></div>
+    <div class="footer-author public-rich-text hidden" data-shared-author id="galleryFooterAuthor"></div>
+  </footer>
+
+  <div class="gallery-lightbox" id="galleryLightbox" aria-hidden="true" role="dialog" aria-modal="true" aria-labelledby="galleryLightboxTitle">
+    <div class="gallery-lightbox-backdrop" data-gallery-close></div>
+    <div class="gallery-lightbox-shell">
+      <button class="gallery-lightbox-close" type="button" data-gallery-close aria-label="Đóng ảnh">×</button>
+      <button class="gallery-lightbox-nav prev" id="galleryPrev" type="button" aria-label="Ảnh trước">‹</button>
+      <button class="gallery-slideshow-btn" id="gallerySlideshow" type="button" aria-pressed="false" title="Tự động chuyển ảnh">▶ Play</button>
+      <figure class="gallery-lightbox-figure">
+        <div class="gallery-lightbox-image-wrap"><img id="galleryLightboxImage" alt=""></div>
+        <figcaption><div><span class="gallery-lightbox-counter" id="galleryLightboxCounter"></span><h2 id="galleryLightboxTitle"></h2><p id="galleryLightboxCaption"></p></div><span class="gallery-lightbox-date" id="galleryLightboxDate"></span></figcaption>
+      </figure>
+      <button class="gallery-lightbox-nav next" id="galleryNext" type="button" aria-label="Ảnh sau">›</button>
+      <div class="gallery-lightbox-thumbs" id="galleryLightboxThumbs"></div>
+    </div>
+  </div>
+
+  <div class="gallery-video-modal" id="galleryVideoModal" aria-hidden="true" role="dialog" aria-modal="true" aria-labelledby="galleryVideoModalTitle"><div class="gallery-video-modal-backdrop" data-video-close></div><div class="gallery-video-modal-shell"><button class="gallery-lightbox-close" type="button" data-video-close aria-label="Đóng video">×</button><div class="gallery-video-player"><iframe id="galleryVideoFrame" title="Video YouTube" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" referrerpolicy="strict-origin-when-cross-origin" allowfullscreen></iframe></div><h2 id="galleryVideoModalTitle"></h2></div></div>
+  <script src="/public-ui.js?v=1.0.23" defer></script>
+  <script src="/gallery.js?v=1.0.23" defer></script>
+</body>
+</html>

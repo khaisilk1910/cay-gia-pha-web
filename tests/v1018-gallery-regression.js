@@ -1,0 +1,67 @@
+'use strict';
+const fs=require('node:fs');
+const os=require('node:os');
+const path=require('node:path');
+const assert=require('node:assert/strict');
+
+const root=path.join(__dirname,'..');
+const adminHtml=fs.readFileSync(path.join(root,'public','admin.html'),'utf8');
+const galleryHtml=fs.readFileSync(path.join(root,'public','gallery.html'),'utf8');
+const galleryJs=fs.readFileSync(path.join(root,'public','gallery.js'),'utf8');
+const adminJs=fs.readFileSync(path.join(root,'public','admin.js'),'utf8');
+const css=fs.readFileSync(path.join(root,'public','styles.css'),'utf8');
+const server=fs.readFileSync(path.join(root,'server.js'),'utf8');
+const dbSource=fs.readFileSync(path.join(root,'lib','db.js'),'utf8');
+
+assert.match(galleryHtml,/id="galleryAlbumGrid"/,'Trang công khai phải có lưới thư mục ảnh');
+assert.match(galleryHtml,/id="galleryLightbox"/,'Trang công khai phải có lightbox xem ảnh');
+assert.match(galleryJs,/ArrowLeft/,'Lightbox phải hỗ trợ bàn phím');
+assert.match(galleryJs,/pointerdown/,'Lightbox phải hỗ trợ thao tác vuốt trên màn hình cảm ứng');
+assert.match(adminHtml,/data-view="gallery"/,'Trang quản trị phải có mục Thư viện ảnh');
+assert.match(adminHtml,/id="galleryPhotoFiles"[^>]*multiple/,'Admin/User được cấp quyền phải tải được nhiều ảnh');
+assert.match(adminJs,/Cho phép quản lý Thư viện ảnh/,'Admin phải cấp được quyền gallery cho user');
+assert.match(adminJs,/galleryCanDelete\(\).*role==='admin'/s,'Frontend chỉ hiển thị xóa cho admin');
+assert.match(server,/if \(!hasRole\(actor,\['admin'\]\)\) return forbidden\(res\);[\s\S]{0,500}deleteGalleryAlbum/,'API xóa thư mục phải giới hạn admin');
+assert.match(server,/if \(!hasRole\(actor,\['admin'\]\)\) return forbidden\(res\);[\s\S]{0,500}deleteGalleryPhoto/,'API xóa ảnh phải giới hạn admin');
+assert.match(server,/canManageGallery\(actor\)/,'API thêm/sửa gallery phải kiểm tra quyền riêng');
+assert.match(css,/\.gallery-lightbox\.open/,'Lightbox phải có hiệu ứng mở');
+assert.match(css,/\.gallery-album-card:hover/,'Thẻ album phải có hiệu ứng hover');
+assert.match(dbSource,/CREATE TABLE IF NOT EXISTS gallery_albums/,'DB phải có bảng thư mục gallery');
+assert.match(dbSource,/CREATE TABLE IF NOT EXISTS gallery_photos/,'DB phải có bảng ảnh gallery');
+assert.match(dbSource,/can_manage_gallery/,'DB phải lưu quyền gallery theo user');
+
+const tmp=fs.mkdtempSync(path.join(os.tmpdir(),'gia-pha-v1018-'));
+process.env.DATA_DIR=path.join(tmp,'data');
+let store;
+try{
+  const {Store}=require('../lib/db');
+  store=new Store();
+  const admin=store.ensureAdmin('admin','Regression-Password-2026!',false);
+  const viewer=store.createUser({username:'galleryuser',display_name:'Gallery User',password:'Regression-Password-2026!',role:'viewer',can_manage_gallery:true},admin.id);
+  const plain=store.createUser({username:'plainviewer',display_name:'Plain Viewer',password:'Regression-Password-2026!',role:'viewer',can_manage_gallery:false},admin.id);
+  assert.equal(!!viewer.can_manage_gallery,true,'Quyền gallery phải được lưu');
+  assert.equal(!!plain.can_manage_gallery,false,'User thường không tự có quyền gallery');
+  const album=store.createGalleryAlbum({title:'Lễ giỗ Tổ',description:'Ảnh năm 2026',is_public:true},viewer.id);
+  const albumRaw=store.getGalleryAlbumRaw(album.id);const albumRel=`gallery/${albumRaw.storage_folder}`;fs.mkdirSync(path.join(process.env.DATA_DIR,'uploads','gallery',albumRaw.storage_folder),{recursive:true});
+  const photo1=store.createGalleryPhoto({album_id:album.id,title:'Ảnh tập thể',caption:'Con cháu sum họp',taken_date:'2026',image_path:`${albumRel}/11111111-1111-4111-8111-111111111111.jpg`},viewer.id);
+  const photo2=store.createGalleryPhoto({album_id:album.id,title:'Mâm lễ',image_path:`${albumRel}/22222222-2222-4222-8222-222222222222.png`},viewer.id);
+  const albums=store.listGalleryAlbums({publicOnly:true});
+  assert.equal(albums.length,1);assert.equal(albums[0].photo_count,2);assert.ok(albums[0].cover_url,'Album phải có URL ảnh bìa khi có ảnh');
+  assert.equal(store.listGalleryPhotos(album.id,{publicOnly:true}).length,2);
+  const uploadFile=path.join(process.env.DATA_DIR,'uploads','gallery',albumRaw.storage_folder,'22222222-2222-4222-8222-222222222222.png');
+  fs.writeFileSync(uploadFile,Buffer.from('iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNk+A8AAQUBAScY42YAAAAASUVORK5CYII=','base64'));
+  const snapshot=store.createDataSnapshot();
+  store.updateGalleryAlbum(album.id,{title:'Tên sau backup'},viewer.id);
+  store.deleteGalleryPhoto(photo2.id,admin.id);fs.rmSync(uploadFile,{force:true});
+  const restored=store.restoreDataDirectory(snapshot.dataDir,admin.id,null);
+  assert.equal(restored.ok,true);assert.equal(store.getGalleryAlbum(album.id).title,'Lễ giỗ Tổ','Restore data-folder phải khôi phục dữ liệu Gallery');
+  assert.equal(store.listGalleryPhotos(album.id).length,2,'Restore phải khôi phục danh sách ảnh Gallery');
+  assert.equal(fs.existsSync(uploadFile),true,'Restore phải khôi phục tệp ảnh Gallery trong đúng thư mục album');
+  store.updateGalleryAlbum(album.id,{is_public:false},viewer.id);
+  assert.equal(store.listGalleryAlbums({publicOnly:true}).length,0,'Album ẩn không được xuất hiện công khai');
+  store.updateGalleryPhoto(photo2.id,{caption:'Đã cập nhật'},viewer.id);
+  assert.equal(store.getGalleryPhoto(photo2.id).caption,'Đã cập nhật');
+  const deleted=store.deleteGalleryPhoto(photo1.id,admin.id);assert.equal(deleted.id,photo1.id);
+  const removedAlbum=store.deleteGalleryAlbum(album.id,admin.id);assert.equal(removedAlbum.image_paths.length,1);
+  console.log('v1018-gallery-regression: OK');
+} finally { try{store?.db?.close();}catch{} fs.rmSync(tmp,{recursive:true,force:true}); }

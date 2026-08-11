@@ -1,0 +1,39 @@
+<!doctype html>
+<html lang="vi">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+  <meta name="description" content="Bản in chất lượng cao cây gia phả.">
+  <title>In cây gia phả</title>
+  <link rel="icon" href="/assets/logo.png">
+  <link rel="stylesheet" href="/print.css?v=1.0.23">
+</head>
+<body>
+  <header class="print-toolbar" aria-label="Công cụ in cây gia phả">
+    <a class="print-back" id="backToTree" href="/">← Cây gia phả</a>
+    <label class="print-field print-branch-field">
+      <span>Cây cần in</span>
+      <select id="printBranch"><option value="">Toàn gia phả</option></select>
+    </label>
+    <label class="print-field print-width-field">
+      <span>Chiều rộng bạt</span>
+      <span class="input-unit"><input id="printWidthCm" type="number" min="50" max="1000" step="10" value="200" inputmode="decimal"><b>cm</b></span>
+    </label>
+    <div class="print-size" id="printSizeInfo">Đang tính kích thước…</div>
+    <button class="print-btn secondary" id="downloadSvg" type="button">Tải SVG chất lượng cao</button>
+    <button class="print-btn primary" id="printNow" type="button">In / Lưu PDF</button>
+  </header>
+
+  <main class="print-workspace">
+    <section class="print-note">
+      <strong>Bản in toàn bộ cây, không có nút + / −.</strong>
+      <span>SVG là định dạng vector phù hợp in bạt khổ lớn vài mét. Chữ và đường nối giữ độ nét khi phóng lớn; độ nét ảnh đại diện phụ thuộc ảnh gốc đã tải lên.</span>
+    </section>
+    <div class="print-loading" id="printLoading">Đang dựng bản in và nhúng ảnh đại diện…</div>
+    <div class="print-error hidden" id="printError"></div>
+    <div class="print-preview" id="printPreview" aria-label="Xem trước bản in"></div>
+  </main>
+
+  <script src="/print.js?v=1.0.23" defer></script>
+</body>
+</html>

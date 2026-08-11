@@ -1,0 +1,17 @@
+.git
+.gitignore
+.env
+.env.*
+!.env.example
+node_modules
+npm-debug.log*
+*.zip
+*.tar
+*.gpbak
+.DS_Store
+Thumbs.db
+data/*
+!data/.gitkeep
+.data-restore-stage-*
+.data-before-restore-*
+.backup-snapshot-*

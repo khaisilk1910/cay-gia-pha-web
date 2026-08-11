@@ -1,0 +1,6 @@
+data/*.db
+data/*.db-shm
+data/*.db-wal
+data/INITIAL_ADMIN.txt
+data/uploads/*
+!data/uploads/.gitkeep

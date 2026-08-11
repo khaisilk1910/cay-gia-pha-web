@@ -1,0 +1,121 @@
+<!doctype html>
+<html lang="vi">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+  <meta name="description" content="Cây gia phả gia đình - xem phả hệ, thông tin các thế hệ và trao đổi bình luận.">
+  <title>Cây Gia Phả</title>
+  <link rel="icon" href="/assets/logo.png">
+  <link rel="stylesheet" href="/styles.css?v=1.0.23">
+</head>
+<body class="public-page">
+  <div class="ambient ambient-a"></div><div class="ambient ambient-b"></div>
+  <header class="site-header">
+    <a class="brand" href="/" aria-label="Trang cây gia phả">
+      <img src="/assets/logo.png" alt="Logo gia phả" class="brand-logo" id="brandLogo">
+      <span class="brand-copy"><small class="brand-label">Gia Phả</small><strong id="clanName">Gia đình</strong></span>
+    </a>
+    <nav class="header-actions" aria-label="Điều hướng">
+      <a class="gallery-header-link" href="/gallery.html"><span>▦</span> Thư viện ảnh</a>
+      <a class="gallery-header-link" href="/contact.html"><span>☎</span> Liên hệ</a>
+      <button class="icon-button mobile-only" id="openCommentsBtn" aria-label="Mở bình luận">💬</button>
+      <a class="admin-link" href="/admin.html">Quản trị <span>↗</span></a>
+    </nav>
+  </header>
+
+  <main>
+    <section class="hero">
+      <div class="hero-kicker"><span class="kicker-dot"></span> Gìn giữ ký ức · Kết nối các thế hệ</div>
+      <div class="hero-heading">
+        <div class="hero-tree-title" id="treeTitle">Gia Phả Gia Đình</div>
+        <h1 id="heroClanName">Gia đình</h1>
+      </div>
+      <div id="treeSubtitle" class="hero-subtitle public-rich-text">Theo dấu các thế hệ trong gia đình qua năm tháng.</div>
+      <div class="stats-row" id="statsRow"></div>
+    </section>
+
+    <section class="tree-shell">
+      <div class="tree-toolbar">
+        <label class="search-box">
+          <span>⌕</span><input id="treeSearch" type="search" placeholder="Tìm thành viên…" autocomplete="off"><kbd>/</kbd>
+        </label>
+        <label class="branch-switcher" title="Chọn cây chính hoặc một Chi gia phả">
+          <span class="branch-switcher-label">Cây đang xem</span>
+          <select id="branchSelect" aria-label="Chọn cây hoặc Chi gia phả"><option value="">Toàn gia phả</option></select>
+        </label>
+        <div class="generation-filter" id="generationFilter" aria-label="Lọc thế hệ"></div>
+        <button class="print-tree-btn" id="openPrint" type="button" title="In toàn bộ cây đang xem, kể cả các nhánh đang ẩn">▧ In cây</button>
+        <div class="zoom-tools" aria-label="Thu phóng">
+          <button class="tool-btn" id="zoomOut" title="Thu nhỏ">−</button>
+          <button class="zoom-label" id="zoomReset" title="Đặt lại">80%</button>
+          <button class="tool-btn" id="zoomIn" title="Phóng to">+</button>
+          <button class="tool-btn" id="fitTree" title="Vừa khung">⛶</button>
+        </div>
+      </div>
+
+      <div class="tree-viewport" id="treeViewport" tabindex="0" aria-label="Cây gia phả. Kéo để di chuyển, dùng nút để thu phóng.">
+        <div class="tree-empty hidden" id="treeEmpty">
+          <div class="empty-icon">♧</div><strong>Chưa có dữ liệu gia phả</strong><span>Quản trị viên có thể thêm cá thể từ trang quản trị.</span>
+        </div>
+        <div class="tree-stage" id="treeStage">
+          <svg id="treeLines" class="tree-lines" aria-hidden="true"></svg>
+          <div id="treeNodes"></div>
+        </div>
+        <div class="drag-hint">Giữ và kéo để di chuyển cây</div>
+      </div>
+
+      <div class="legend" id="treeLegend"></div>
+    </section>
+  </main>
+
+
+  <div class="stats-backdrop" id="statsBackdrop"></div>
+  <aside class="stats-panel" id="statsPanel" aria-hidden="true" aria-labelledby="statsPanelTitle">
+    <div class="stats-panel-head"><div><span class="eyebrow">Danh sách thống kê</span><h2 id="statsPanelTitle">Thành viên</h2><p id="statsPanelSummary"></p></div><button class="panel-close" id="closeStats" aria-label="Đóng">×</button></div>
+    <div class="stats-list-tools">
+      <label class="stats-search"><span>⌕</span><input id="statsSearch" type="search" placeholder="Tìm theo tên…" autocomplete="off" aria-label="Tìm cá thể theo tên"></label>
+    </div>
+    <div class="stats-person-list" id="statsPersonList"></div>
+    <div class="stats-pagination people-pagination" aria-label="Phân trang danh sách thống kê">
+      <div class="people-page-info" id="statsPageInfo">0 cá thể</div>
+      <div class="people-page-controls">
+        <button type="button" class="page-btn" id="statsFirstPage">Đầu</button>
+        <button type="button" class="page-btn" id="statsPrevPage">Lùi</button>
+        <label class="page-jump">Trang <input id="statsPageInput" type="number" min="1" value="1" inputmode="numeric"> <span id="statsPageTotal">/ 1</span></label>
+        <button type="button" class="page-btn" id="statsNextPage">Tiến</button>
+        <button type="button" class="page-btn" id="statsLastPage">Cuối</button>
+      </div>
+    </div>
+  </aside>
+
+  <aside class="detail-panel" id="detailPanel" aria-hidden="true">
+    <button class="panel-close" id="closeDetail" aria-label="Đóng">×</button>
+    <div id="detailContent"></div>
+  </aside>
+  <div class="panel-backdrop" id="panelBackdrop"></div>
+
+  <aside class="comment-panel" id="commentPanel">
+    <div class="comment-header"><div><span class="eyebrow">Góc gia đình</span><h2>Trò chuyện & bình luận</h2></div><button class="panel-close" id="closeComments" aria-label="Đóng">×</button></div>
+    <div class="comment-list" id="commentList" aria-live="polite"></div>
+    <form class="comment-form" id="commentForm">
+      <label id="commentNameWrap"><span>Tên hiển thị</span><input id="commentName" maxlength="60" required placeholder="Ví dụ: Nguyễn An"></label>
+      <label><span>Lời nhắn</span><textarea id="commentMessage" maxlength="600" rows="3" required placeholder="Gửi lời nhắn cho gia đình…"></textarea></label>
+      <div class="comment-form-bottom"><small>Vui lòng không đăng thông tin nhạy cảm.</small><button class="primary-btn" type="submit">Gửi bình luận</button></div>
+      <div class="form-status" id="commentStatus"></div>
+    </form>
+  </aside>
+  <button class="comment-fab" id="commentFab"><span>💬</span><span>Bình luận</span><b id="commentCount">0</b></button>
+
+  <footer class="site-footer">
+    <div class="footer-summary public-rich-text" id="treeFooterContent">Cây gia phả · Dữ liệu gia đình được trình bày với ưu tiên quyền riêng tư.</div>
+    <section class="fund-support hidden" id="fundSupport" aria-labelledby="fundSupportTitle">
+      <div class="fund-support-glow" aria-hidden="true"></div>
+      <div class="fund-support-qr-wrap" id="fundSupportQrWrap"><div class="fund-support-qr-frame"><img id="fundSupportQr" alt="Mã QR ủng hộ quỹ dòng họ"></div><span class="fund-support-scan">Quét mã để ủng hộ</span></div>
+      <div class="fund-support-copy"><span class="fund-support-kicker">Chung tay gìn giữ nguồn cội</span><h2 id="fundSupportTitle">Ủng hộ quỹ dòng họ</h2><div class="fund-support-content" id="fundSupportContent"></div></div>
+    </section>
+    <div class="traffic-row footer-traffic" id="trafficStats" aria-live="polite"></div>
+    <div class="footer-author public-rich-text hidden" id="footerAuthor"></div>
+  </footer>
+  <script src="/app.js?v=1.0.23" defer></script>
+</body>
+</html>
