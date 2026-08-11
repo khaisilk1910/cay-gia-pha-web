@@ -1,15 +1,16 @@
-# Cây Gia Phả Web v1.0.26
+# Cây Gia Phả Web v1.0.27
 
-Bản v1.0.26 giữ nguyên toàn bộ tính năng v1.0.25 và cập nhật cách triển khai Docker: hỗ trợ dùng tag `latest`, tự đồng bộ mã ứng dụng vào thư mục host `/opt/cay-gia-pha-web/app`, trong khi dữ liệu vẫn nằm riêng tại `/opt/cay-gia-pha-web/data`.
+Bản v1.0.27 tập trung vào **Rich Text ổn định, Cài đặt dễ quản lý, popup chào mừng và bố cục nhiều đời vợ/chồng**. Dữ liệu v1.0.26 được nâng cấp trực tiếp, không cần tạo lại database.
 
-## Cập nhật v1.0.26
+## Cập nhật v1.0.27
 
-- Giữ nguyên toàn bộ tính năng và dữ liệu của v1.0.25; không có migration phá vỡ dữ liệu.
-- Bản Docker hỗ trợ triển khai trực tiếp bằng `ghcr.io/khaisilk1910/cay-gia-pha-web:latest` với `pull_policy: always`, không bắt buộc dùng biến `${IMAGE_TAG}`.
-- Khi dùng Stack mới, thư mục host `/opt/cay-gia-pha-web/` chứa rõ ràng `app/` (mã ứng dụng đang chạy) và `data/` (database, uploads, backup/restore).
-- Mỗi khi image `latest` thay đổi, entrypoint so sánh mã build và tự thay `app/` bằng bản ứng dụng mới từ image; `data/` không bị ghi đè. Vì vậy cập nhật container vẫn giữ nguyên dữ liệu gia phả.
-- Image không khai báo Docker anonymous volume cho thư mục lưu trữ; Stack dùng bind mount trực tiếp `/opt/cay-gia-pha-web:/var/lib/cay-gia-pha` để tránh dữ liệu ứng dụng rơi vào volume ẩn ngoài ý muốn.
-- Lưu ý: các lớp image, metadata container và Docker Engine vẫn do Docker quản lý trong `data-root` của Docker. Stack chỉ đưa **mã ứng dụng và dữ liệu của Cây Gia Phả Web** ra `/opt/cay-gia-pha-web/`.
+- Sửa vòng đời Rich Text: **Enter, nhiều dòng trống và dòng trống ở cuối được giữ nguyên** sau khi Lưu → mở lại Cài đặt → sửa mục khác → Lưu lần nữa; không còn hiện tượng khoảng cách cũ bị mất sau lần lưu tiếp theo.
+- Tất cả Rich Text trong **Cài đặt** có cùng bộ công cụ định dạng (font Unicode tiếng Việt, cỡ chữ, màu, đậm, nghiêng, gạch chân, gạch ngang, căn lề, xóa định dạng) và có nút **Chèn ảnh**. Ảnh nội dung lưu riêng trong `data/uploads/richtext/`, được backup/restore cùng toàn bộ `data/`.
+- Trang **Cài đặt** được chia thành các tab chức năng: Cây gia phả, Thư viện, Ủng hộ, Liên hệ, Tác giả, Popup chào mừng, Logo & riêng tư, Sao lưu & khôi phục. Nút Lưu nổi vẫn dùng chung cho mọi tab.
+- Thêm **Popup chào mừng / thông báo** có thể bật/tắt. Nội dung là Rich Text đầy đủ và có thể chèn ảnh; giao diện modal hiện đại, responsive, có hiệu ứng và tôn trọng `prefers-reduced-motion`. Popup hiển thị một lần trong phiên trình duyệt; khi admin đổi nội dung, thông báo mới sẽ xuất hiện lại.
+- Logo admin upload được dùng làm **favicon trên tab trình duyệt** ở các trang công khai, trang in và giao diện quản trị sau khi tải Cài đặt.
+- Bố cục nhiều đời vợ/chồng được tách rõ hơn: theo thứ tự hôn phối admin đặt, **các đời trước nằm bên trái người nội tộc, đời hiện tại/cuối nằm bên phải**; các nhóm con/cháu theo từng cuộc hôn nhân có khoảng đệm ngang riêng để giảm tối đa đường nối và nhánh chồng lên nhau. Bản in/SVG dùng cùng nguyên tắc.
+- Bản Docker tiếp tục hỗ trợ `ghcr.io/khaisilk1910/cay-gia-pha-web:latest`, `pull_policy: always`, và bind mount `/opt/cay-gia-pha-web` để `app/` + `data/` đều nằm rõ ràng trên Ubuntu host.
 
 ## Cập nhật v1.0.23
 
@@ -332,4 +333,4 @@ Khi nâng cấp từ v1.0.3 bằng hotfix, bảng `branches` được tạo tự
 
 ## Docker / Container
 
-Bản Docker-ready tương ứng được đóng gói riêng trong `cay-gia-pha-web-v1.0.26-docker.zip`, kèm `Dockerfile`, Compose và Portainer Stack.
+Bản Docker-ready tương ứng được đóng gói riêng trong `cay-gia-pha-web-v1.0.27-docker.zip`, kèm `Dockerfile`, Compose và Portainer Stack.

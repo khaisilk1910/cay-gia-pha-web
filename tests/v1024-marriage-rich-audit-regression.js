@@ -65,7 +65,7 @@ try{
   ];
   const layout=runApp(`buildLayout(${JSON.stringify(people)})`);
   const cx=Object.fromEntries(Array.from(layout.nodes,n=>[n.person.id,n.cx]));
-  assert.ok(cx.h<cx.w1&&cx.w1<cx.w2&&cx.w2<cx.w3,'Vợ phải hiển thị đúng thứ tự Vợ cả → Vợ 2 → Vợ 3');
+  assert.ok(cx.w1<cx.w2&&cx.w2<cx.h&&cx.h<cx.w3,'Các đời vợ trước phải nằm bên trái, đời vợ cuối bên phải người chồng');
   const multiPaths=Array.from(layout.paths).filter(p=>p.includes('spouse-multi'));
   assert.equal(multiPaths.length,3,'Ba cuộc hôn nhân phải có ba làn đường riêng');
   assert.ok(multiPaths.every(p=>/ V .* H .* V /.test(p)),'Đường nhiều hôn phối phải đi xuống làn riêng thay vì xuyên qua thẻ người');
@@ -78,7 +78,7 @@ try{
 
   const reordered=people.map(p=>p.id==='h'?{...p,spouse_order_ids:['w3','w1','w2']}:p);
   const layout2=runApp(`buildLayout(${JSON.stringify(reordered)})`); const cx2=Object.fromEntries(Array.from(layout2.nodes,n=>[n.person.id,n.cx]));
-  assert.ok(cx2.h<cx2.w3&&cx2.w3<cx2.w1&&cx2.w1<cx2.w2,'Đổi thứ tự hôn phối phải đổi cả vị trí nhánh trên cây');
+  assert.ok(cx2.w3<cx2.w1&&cx2.w1<cx2.h&&cx2.h<cx2.w2,'Đổi thứ tự hôn phối phải giữ các đời trước bên trái và đời cuối bên phải');
   assert.ok(cx2.c31<Math.min(cx2.c11,cx2.c12)&&Math.max(cx2.c11,cx2.c12)<cx2.c21,'Nhánh con phải di chuyển cùng thứ tự hôn phối');
 
   // --- Rich Text editor serialization: contenteditable DIV/P line breaks must survive save.

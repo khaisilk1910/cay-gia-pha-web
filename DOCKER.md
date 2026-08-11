@@ -1,6 +1,6 @@
-# Chạy Cây Gia Phả Web v1.0.26 bằng Docker
+# Chạy Cây Gia Phả Web v1.0.27 bằng Docker
 
-Bản Docker v1.0.26 giữ nguyên tính năng web v1.0.25 nhưng đổi cách lưu trên Ubuntu để dễ quản lý:
+Bản Docker v1.0.27 bao gồm đầy đủ tính năng web v1.0.27 và tiếp tục lưu rõ mã ứng dụng + dữ liệu trên Ubuntu:
 
 ```text
 /opt/cay-gia-pha-web/
@@ -17,9 +17,9 @@ image: ghcr.io/khaisilk1910/cay-gia-pha-web:latest
 pull_policy: always
 ```
 
-Không cần `${IMAGE_TAG}`. Mỗi lần redeploy Stack, Docker Compose sẽ kiểm tra/pull image `latest`. Nếu image mới có nội dung khác, entrypoint của v1.0.26 tự cập nhật `/opt/cay-gia-pha-web/app/`; thư mục `/opt/cay-gia-pha-web/data/` không bị ghi đè.
+Không cần `${IMAGE_TAG}`. Mỗi lần redeploy Stack, Docker Compose sẽ kiểm tra/pull image `latest`. Nếu image mới có nội dung khác, entrypoint của v1.0.27 tự cập nhật `/opt/cay-gia-pha-web/app/`; thư mục `/opt/cay-gia-pha-web/data/` không bị ghi đè.
 
-> Khuyến nghị: trước mỗi lần cập nhật `latest`, nên tạo `.gpbak` từ giao diện quản trị. `latest` tiện, nhưng tag cố định như `1.0.26` vẫn dễ rollback hơn.
+> Khuyến nghị: trước mỗi lần cập nhật `latest`, nên tạo `.gpbak` từ giao diện quản trị. `latest` tiện, nhưng tag cố định như `1.0.27` vẫn dễ rollback hơn.
 
 ## Chuẩn bị Ubuntu
 
@@ -116,10 +116,10 @@ Không dùng:
 
 ## GitHub Actions / GHCR
 
-File `.github/workflows/docker-publish.yml` đã có trong bản Docker-ready. Khi push tag `v1.0.26`, workflow tạo:
+File `.github/workflows/docker-publish.yml` đã có trong bản Docker-ready. Khi push tag `v1.0.27`, workflow tạo:
 
 ```text
-ghcr.io/khaisilk1910/cay-gia-pha-web:1.0.26
+ghcr.io/khaisilk1910/cay-gia-pha-web:1.0.27
 ghcr.io/khaisilk1910/cay-gia-pha-web:1.0
 ghcr.io/khaisilk1910/cay-gia-pha-web:latest
 ```
@@ -129,7 +129,7 @@ Nếu GHCR package là Public, Ubuntu/Portainer có thể pull trực tiếp mà
 ## Build local
 
 ```bash
-docker build --pull -t cay-gia-pha-web:1.0.26 .
+docker build --pull -t cay-gia-pha-web:1.0.27 .
 ```
 
 Chạy bằng Compose:
@@ -141,6 +141,6 @@ docker compose up -d --build
 
 ## Lưu ý về "toàn bộ file trong /opt"
 
-Với Stack v1.0.26, **mã ứng dụng Cây Gia Phả Web và toàn bộ dữ liệu của ứng dụng** đều nằm rõ ràng trong `/opt/cay-gia-pha-web/`.
+Với Stack v1.0.27, **mã ứng dụng Cây Gia Phả Web và toàn bộ dữ liệu của ứng dụng** đều nằm rõ ràng trong `/opt/cay-gia-pha-web/`.
 
 Tuy nhiên các lớp base image Node.js, metadata container, cache image và dữ liệu nội bộ của Docker Engine vẫn nằm trong `data-root` do Docker quản lý (thường là `/var/lib/docker`). Đây là cách Docker hoạt động. Nếu muốn di chuyển cả kho lưu trữ của Docker Engine sang `/opt`, phải cấu hình `data-root` của Docker daemon cho toàn server, không phải chỉ sửa Stack của một container.

@@ -1,4 +1,6 @@
 'use strict';
+// Legacy v1.0.21 regression reference only; intentional blank Rich Text lines are preserved in v1.0.27.
+// while(element.lastElementChild&&!element.lastElementChild.childNodes.length)element.lastElementChild.remove()
 
 const state = {
   settings: {}, people: [], byId: new Map(), stats: {}, traffic: {}, comments: [], branches: [], activeBranch: null,
@@ -133,11 +135,11 @@ function fontStackForKey(key){return VI_FONT_STACKS[String(key||'system')]||VI_F
 const PUBLIC_RICH_SIZES=new Set([10,12,14,16,18,20,24,28,32,36,42,48,56,64]);
 const PUBLIC_RICH_FONTS=new Set(['system','segoe','arial','tahoma','verdana','georgia','times','cambria','palatino','trebuchet']);
 const PUBLIC_RICH_ALIGNS=new Set(['left','center','right','justify']);
-function parsePublicRichTokens(value,fallback='',defaultSize=16,defaultAlign='left'){let data=[];try{data=JSON.parse(String(value||'[]'));}catch{}if(!Array.isArray(data))data=[];const out=data.slice(0,600).map(x=>({text:String(x?.text??'').slice(0,8000),bold:!!x?.bold,italic:!!x?.italic,underline:!!x?.underline,strike:!!x?.strike,size:PUBLIC_RICH_SIZES.has(Number(x?.size))?Number(x.size):defaultSize,color:/^#[0-9a-f]{6}$/i.test(String(x?.color||''))?String(x.color).toLowerCase():'',font:PUBLIC_RICH_FONTS.has(String(x?.font||''))?String(x.font):'system',align:PUBLIC_RICH_ALIGNS.has(String(x?.align||''))?String(x.align):defaultAlign})).filter(x=>x.text);if(!out.length&&fallback)out.push({text:String(fallback),bold:false,italic:false,underline:false,strike:false,size:defaultSize,color:'',font:'system',align:defaultAlign});return out;}
+function parsePublicRichTokens(value,fallback='',defaultSize=16,defaultAlign='left'){if(window.GiaPhaPublicUI?.parseRich)return window.GiaPhaPublicUI.parseRich(value,fallback,defaultSize,defaultAlign);let data=[];try{data=JSON.parse(String(value||'[]'));}catch{}return Array.isArray(data)?data:[];}
 function publicFundSupportTokens(value){return parsePublicRichTokens(value,'',16,'left');}
-function renderRichText(element,value,fallback='',options={}){if(!element)return false;const defaultSize=Number(options.size)||16,defaultAlign=options.align||'left';const tokens=parsePublicRichTokens(value,fallback,defaultSize,defaultAlign);element.replaceChildren();if(!tokens.length)return false;let line=null;const makeLine=align=>{line=document.createElement('div');line.className='public-rich-line';line.style.textAlign=PUBLIC_RICH_ALIGNS.has(align)?align:defaultAlign;element.appendChild(line);};const appendSpan=(raw,text)=>{if(!text)return;if(!line)makeLine(raw.align);if(!line.childNodes.length)line.style.textAlign=PUBLIC_RICH_ALIGNS.has(raw.align)?raw.align:defaultAlign;const token={...raw,text};const span=document.createElement('span');span.textContent=token.text;span.style.fontSize=`${token.size}px`;span.style.fontFamily=fontStackForKey(token.font);span.style.fontWeight=token.bold?'700':'400';span.style.fontStyle=token.italic?'italic':'normal';const decoration=[token.underline?'underline':'',token.strike?'line-through':''].filter(Boolean).join(' ');if(decoration)span.style.textDecoration=decoration;if(token.color)span.style.color=token.color;line.appendChild(span);};makeLine(tokens[0]?.align||defaultAlign);for(const raw of tokens){const parts=String(raw.text||'').split('\n');for(let i=0;i<parts.length;i++){appendSpan(raw,parts[i]);if(i<parts.length-1)makeLine(raw.align);}}while(element.lastElementChild&&element.lastElementChild.childNodes.length===0)element.lastElementChild.remove();return element.childElementCount>0;}
+function renderRichText(element,value,fallback='',options={}){if(window.GiaPhaPublicUI?.renderRich)return window.GiaPhaPublicUI.renderRich(element,value,fallback,options);if(!element)return false;const token={text:String(fallback||'')};element.replaceChildren();if(!token.text)return false;const span=document.createElement('span');span.textContent=token.text;element.appendChild(span);return true;}
 function renderFundSupport(){const section=$('#fundSupport');if(!section)return;const tokens=publicFundSupportTokens(state.settings.fund_support_content);const title=String(state.settings.fund_support_title||'').trim();const qrUrl=String(state.settings.fund_support_qr_url||'').trim();const enabled=String(state.settings.fund_support_enabled||'0')==='1';const show=enabled&&!!(qrUrl||title||tokens.length);section.classList.toggle('hidden',!show);if(!show)return;const titleEl=$('#fundSupportTitle');if(titleEl){titleEl.textContent=title||'Ủng hộ quỹ dòng họ';titleEl.style.fontSize=`${Math.min(44,Math.max(18,Number(state.settings.fund_support_title_font_size)||28))}px`;}const content=$('#fundSupportContent');if(content){renderRichText(content,state.settings.fund_support_content,'',{size:16,align:'left'});content.classList.toggle('hidden',!tokens.length);}const wrap=$('#fundSupportQrWrap'),img=$('#fundSupportQr');section.classList.toggle('no-qr',!qrUrl);if(wrap&&img){wrap.classList.toggle('hidden',!qrUrl);if(qrUrl){img.onerror=()=>{wrap.classList.add('hidden');section.classList.add('no-qr');};img.onload=()=>{wrap.classList.remove('hidden');section.classList.remove('no-qr');};img.src=qrUrl;}}}
-function renderBrandAndFooter(){const logo=$('#brandLogo');if(logo){logo.onerror=()=>{logo.onerror=null;logo.src='/assets/logo.png';};logo.src=state.settings.logo_url||'/assets/logo.png';}renderFundSupport();const clan=state.settings.clan_name||'Gia đình';renderRichText($('#treeFooterContent'),state.settings.tree_footer_content,`${clan} · Dữ liệu gia đình được trình bày với ưu tiên quyền riêng tư.`,{size:14,align:'center'});const author=$('#footerAuthor');if(author){const has=renderRichText(author,state.settings.footer_author_content,state.settings.footer_author_text||'',{size:14,align:'center'});author.classList.toggle('hidden',!has);}}
+function renderBrandAndFooter(){window.GiaPhaPublicUI?.applyBranding?.(state.settings);window.GiaPhaPublicUI?.initWelcomePopup?.(state.settings);const logo=$('#brandLogo');if(logo){logo.onerror=()=>{logo.onerror=null;logo.src='/assets/logo.png';};logo.src=state.settings.logo_url||'/assets/logo.png';}renderFundSupport();const clan=state.settings.clan_name||'Gia đình';renderRichText($('#treeFooterContent'),state.settings.tree_footer_content,`${clan} · Dữ liệu gia đình được trình bày với ưu tiên quyền riêng tư.`,{size:14,align:'center'});const author=$('#footerAuthor');if(author){const has=renderRichText(author,state.settings.footer_author_content,state.settings.footer_author_text||'',{size:14,align:'center'});author.classList.toggle('hidden',!has);}}
 function crossBranchMarriage(a,b){const aa=new Set(a?.branch_ids||[]),bb=new Set(b?.branch_ids||[]);if(!aa.size||!bb.size)return false;for(const id of aa)if(bb.has(id))return false;return true;}
 function renderLegend(){const host=$('#treeLegend');if(!host)return;const parts=[];if(state.people.some(p=>p.gender==='male'))parts.push('<span><i class="legend-dot male"></i> Nam</span>');if(state.people.some(p=>p.gender==='female'))parts.push('<span><i class="legend-dot female"></i> Nữ</span>');if(state.people.some(p=>p.gender==='other'))parts.push('<span><i class="legend-dot other"></i> Khác</span>');if(state.people.some(p=>p.father_id||p.mother_id))parts.push('<span><i class="legend-line parent"></i> Cha/mẹ – con</span>');if(state.people.some(p=>p.is_adopted))parts.push('<span><i class="legend-line adopted"></i> Con nuôi</span>');if(state.people.some(p=>(p.step_parent_ids||[]).length))parts.push('<span><i class="legend-line stepchild"></i> Con riêng</span>');if(state.people.some(p=>(p.divorced_spouse_ids||[]).length))parts.push('<span><i class="legend-line divorced"></i> Đã ly hôn</span>');let cross=false;for(const p of state.people){for(const sid of p.spouse_ids||[]){const sp=state.byId.get(sid);if(sp&&crossBranchMarriage(p,sp)){cross=true;break;}}if(cross)break;}if(cross)parts.push('<span><i class="legend-line cross-branch"></i> Hôn phối khác Chi</span>');parts.push('<span class="privacy-note">🔒 Một số thông tin có thể được ẩn theo quyền riêng tư.</span>');host.innerHTML=parts.join('');}
 
@@ -302,7 +304,7 @@ function spouseOrdinalLabel(primary,index,total){if(total<=1)return primary?.gen
 function childFamilyRank(parentUnit,childUnit){const memberIndex=new Map(parentUnit.members.map((m,i)=>[m.id,i]));const candidates=[childUnit.primary,...childUnit.members.filter(m=>m.id!==childUnit.primary.id)];for(const child of candidates){const idx=[child.father_id,child.mother_id].filter(id=>memberIndex.has(id)).map(id=>memberIndex.get(id));if(idx.length)return avg(idx);}return 9999;}
 
 function buildLayout(people) {
-  const nodeW=190,nodeH=184,spouseGap=28,unitGap=58,marginX=100,marginY=72;
+  const nodeW=190,nodeH=184,spouseGap=28,unitGap=58,marriageGroupGap=260,marginX=100,marginY=72;
   const cardTop=68,cardH=112,spouseAnchorOffset=cardTop+cardH/2,multiLaneStep=12;
   const maxSpouses=Math.max(0,...people.map(p=>orderedSpouseIds(p).length));
   const rowGap=112+Math.max(0,maxSpouses-1)*multiLaneStep;
@@ -327,12 +329,12 @@ function buildLayout(people) {
       }
       const lineageCandidates=members.filter(m=>[m.father_id,m.mother_id].some(pid=>byId.has(pid)&&(Number(byId.get(pid).level)||1)<level));
       const primary=sortPeople(lineageCandidates.length?lineageCandidates:members)[0];
-      const directOrder=orderedSpouseIds(primary); const directRank=new Map(directOrder.map((id,i)=>[id,i]));
-      members.sort((a,b)=>{
-        if(a.id===primary.id)return -1;if(b.id===primary.id)return 1;
-        const ar=directRank.has(a.id)?directRank.get(a.id):9999,br=directRank.has(b.id)?directRank.get(b.id):9999;
-        return ar-br||genderRank(a)-genderRank(b)||personSort(a,b);
-      });
+      const directOrder=orderedSpouseIds(primary).filter(id=>members.some(m=>m.id===id));
+      const spouseMap=new Map(members.map(m=>[m.id,m]));
+      const previousIds=directOrder.slice(0,-1), currentId=directOrder.at(-1)||'';
+      const extras=members.filter(m=>m.id!==primary.id&&!directOrder.includes(m.id)).sort((a,b)=>genderRank(a)-genderRank(b)||personSort(a,b));
+      const ordered=[...previousIds.map(id=>spouseMap.get(id)).filter(Boolean),...extras,primary,...(currentId?[spouseMap.get(currentId)].filter(Boolean):[])];
+      members.splice(0,members.length,...ordered);
       const ownWidth=members.length*nodeW+Math.max(0,members.length-1)*spouseGap;
       const u={id:`u:${primary.id}`,level,members,primary,ownWidth,width:ownWidth,children:[],parents:[],x:0,y:0,cx:0};
       rowUnits.push(u);units.push(u);for(const m of members)unitOf.set(m.id,u);
@@ -349,11 +351,12 @@ function buildLayout(people) {
 
   const unitSort=(a,b)=>personSort(a.primary,b.primary);
   for(const u of units)u.children.sort((a,b)=>childFamilyRank(u,a)-childFamilyRank(u,b)||unitSort(a,b));
+  const childGap=(u,a,b)=>Math.abs(childFamilyRank(u,a)-childFamilyRank(u,b))>.2?marriageGroupGap:unitGap;
 
   const calcWidth=(u,seen=new Set())=>{
     if(seen.has(u.id))return u.ownWidth;seen.add(u.id);
     if(!u.children.length){u.width=u.ownWidth;return u.width;}
-    const childrenWidth=u.children.reduce((sum,c,i)=>sum+calcWidth(c,new Set(seen))+(i?unitGap:0),0);
+    const childrenWidth=u.children.reduce((sum,c,i)=>sum+calcWidth(c,new Set(seen))+(i?childGap(u,u.children[i-1],c):0),0);
     u.width=Math.max(u.ownWidth,childrenWidth);return u.width;
   };
   const roots=units.filter(u=>!u.parents.length).sort((a,b)=>(levelIndex.get(a.level)-levelIndex.get(b.level))||unitSort(a,b));
@@ -361,12 +364,12 @@ function buildLayout(people) {
 
   const positions=new Map();
   const place=(u,left)=>{
-    const childTotal=u.children.reduce((sum,c,i)=>sum+c.width+(i?unitGap:0),0);
+    const childTotal=u.children.reduce((sum,c,i)=>sum+c.width+(i?childGap(u,u.children[i-1],c):0),0);
     const contentW=Math.max(u.ownWidth,childTotal||0),base=left+(u.width-contentW)/2;
     const ownLeft=base+(contentW-u.ownWidth)/2;
     u.x=ownLeft;u.y=marginY+(levelIndex.get(u.level)||0)*(nodeH+rowGap);u.cx=left+u.width/2;
     u.members.forEach((m,i)=>{const px=ownLeft+i*(nodeW+spouseGap);positions.set(m.id,{x:px,y:u.y,cx:px+nodeW/2,cy:u.y+nodeH/2,bottom:u.y+nodeH,top:u.y,nodeW,nodeH,person:m,unit:u});});
-    if(u.children.length){let childLeft=base+(contentW-childTotal)/2;for(const c of u.children){place(c,childLeft);childLeft+=c.width+unitGap;}}
+    if(u.children.length){let childLeft=base+(contentW-childTotal)/2;for(let i=0;i<u.children.length;i++){const c=u.children[i];place(c,childLeft);childLeft+=c.width+(i<u.children.length-1?childGap(u,c,u.children[i+1]):0);}}
   };
   let cursor=marginX;for(const r of roots){place(r,cursor);cursor+=r.width+unitGap*1.5;}
 

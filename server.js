@@ -21,6 +21,7 @@ const COOKIE_SECURE = String(process.env.COOKIE_SECURE || '0') === '1';
 const TRUST_PROXY = String(process.env.TRUST_PROXY || '0') === '1';
 const PUBLIC_DIR = path.join(__dirname, 'public');
 const MAX_BACKUP_FILE_BYTES = Math.max(64, Math.min(4096, Number(process.env.MAX_BACKUP_MB || 1024))) * 1024 * 1024;
+const RICH_SETTING_KEYS = ['tree_subtitle_content','tree_footer_content','gallery_intro_content','gallery_footer_content','fund_support_content','footer_author_content','contact_intro_content','contact_footer_content','contact_map_address_content','welcome_popup_content'];
 const store = new Store();
 
 const requestedAdminPassword = String(process.env.ADMIN_PASSWORD || '');
@@ -412,6 +413,7 @@ async function handleApi(req, res, url) {
       const oldQr = store.getSetting('fund_support_qr_path','');
       const legacyTemple = store.getSetting('contact_temple_image_path','');
       const oldTemplePaths = [...new Set([...settingPathArray(store.getSetting('contact_temple_image_paths','[]')), ...(legacyTemple?[legacyTemple]:[])])].filter((p)=>normalizeUploadPath(p)?.startsWith(`${UPLOAD_LAYOUT.temple}/`)).slice(0,10);
+      const oldRichPaths = collectRichImagePathsFromSettings(store.settings());
       const createdFiles = [];
       try {
         if (body.remove_logo) body.site_logo_path='';
@@ -426,12 +428,14 @@ async function handleApi(req, res, url) {
         nextTemplePaths=[...new Set(nextTemplePaths)].slice(0,10);
         body.contact_temple_image_paths=JSON.stringify(nextTemplePaths);
         body.contact_temple_image_path=nextTemplePaths[0]||'';
+        for (const key of RICH_SETTING_KEYS) if (body[key] !== undefined) body[key] = materializeRichImages(body[key], createdFiles);
         delete body.logo_image_data; delete body.remove_logo; delete body.fund_qr_image_data; delete body.remove_fund_qr; delete body.contact_temple_image_data; delete body.remove_contact_temple_image; delete body.contact_temple_image_data_list; delete body.remove_contact_temple_images;
         const settings = store.updateSettings(body, actor.id);
         const keptTemple=new Set(settingPathArray(settings.contact_temple_image_paths));
         if (oldLogo && settings.site_logo_path !== oldLogo && settings.fund_support_qr_path !== oldLogo && !keptTemple.has(oldLogo)) deleteImageFile(oldLogo);
         if (oldQr && settings.fund_support_qr_path !== oldQr && settings.site_logo_path !== oldQr && !keptTemple.has(oldQr)) deleteImageFile(oldQr);
         for (const oldTemple of oldTemplePaths) if (!keptTemple.has(oldTemple)) deleteImageFile(oldTemple);
+        const keptRichPaths=collectRichImagePathsFromSettings(settings); for(const oldPath of oldRichPaths) if(!keptRichPaths.has(oldPath)) deleteImageFile(oldPath);
         return json(res, 200, { settings });
       } catch (e) {
         for (const file of createdFiles) deleteImageFile(file);
@@ -603,7 +607,7 @@ function serveStatic(res, pathname) {
 function serveUpload(res, pathname) {
   const rel=normalizeUploadPath(pathname.slice('/uploads/'.length));
   if(!rel)return text404(res);
-  const allowed=[`${UPLOAD_LAYOUT.logo}/`,`${UPLOAD_LAYOUT.qrcode}/`,`${UPLOAD_LAYOUT.profiles}/`,`${UPLOAD_LAYOUT.gallery}/`,`${UPLOAD_LAYOUT.contacts}/`,`${UPLOAD_LAYOUT.temple}/`];
+  const allowed=[`${UPLOAD_LAYOUT.logo}/`,`${UPLOAD_LAYOUT.qrcode}/`,`${UPLOAD_LAYOUT.profiles}/`,`${UPLOAD_LAYOUT.gallery}/`,`${UPLOAD_LAYOUT.contacts}/`,`${UPLOAD_LAYOUT.temple}/`,`${UPLOAD_LAYOUT.richtext}/`];
   if(!allowed.some((prefix)=>rel.startsWith(prefix)))return text404(res);
   const target=uploadFullPath(rel);
   if(!target||!fs.existsSync(target)||!fs.statSync(target).isFile())return text404(res);
@@ -667,7 +671,12 @@ function validatePassword(p){ if(p.length<12)return 'Mật khẩu mới cần í
 function validateUserInput(body,isNew){ const u=String(body.username||'').trim(); if(isNew&&!/^[a-zA-Z0-9._-]{3,40}$/.test(u))return 'Username cần 3-40 ký tự: chữ, số, dấu chấm, gạch dưới hoặc gạch ngang.'; if(!String(body.display_name||'').trim())return 'Tên hiển thị không được để trống.'; if(!['admin','editor','viewer'].includes(body.role))return 'Role không hợp lệ.'; if(isNew){ const p=validatePassword(String(body.password||'')); if(p)return p; } return null; }
 function publicUser(u){ if(!u)return null; return { id:u.id||u.user_id, username:u.username, display_name:u.display_name, role:u.role, is_active:u.is_active==null?true:!!u.is_active, can_manage_gallery:u.role==='admin'||!!u.can_manage_gallery, must_change_password:!!u.must_change_password, last_login_at:u.last_login_at||null }; }
 function settingPathArray(value){ if(Array.isArray(value))return value.map(String).filter(Boolean);try{const parsed=JSON.parse(String(value||'[]'));return Array.isArray(parsed)?parsed.map(String).filter(Boolean):[];}catch{return [];} }
-function publicSettings(s){ const templePaths=[...new Set([...settingPathArray(s.contact_temple_image_paths), ...(s.contact_temple_image_path?[s.contact_temple_image_path]:[])])].map(normalizeUploadPath).filter((p)=>p&&p.startsWith(`${UPLOAD_LAYOUT.temple}/`)).slice(0,10); const templeUrls=templePaths.map(uploadUrl).filter(Boolean); return { tree_title:s.tree_title, tree_subtitle:s.tree_subtitle, tree_subtitle_content:s.tree_subtitle_content||'[]', clan_name:s.clan_name, tree_footer_content:s.tree_footer_content||'[]', gallery_intro_content:s.gallery_intro_content||'[]', gallery_footer_content:s.gallery_footer_content||'[]', public_comments_enabled:s.public_comments_enabled, accent_theme:s.accent_theme, tree_font:s.tree_font||'system', tree_title_font_size:s.tree_title_font_size||'28', clan_name_font_size:s.clan_name_font_size||'66', logo_url:s.site_logo_path?(uploadUrl(s.site_logo_path)||'/assets/logo.png'):'/assets/logo.png', fund_support_enabled:s.fund_support_enabled||'0', fund_support_title:s.fund_support_title||'', fund_support_title_font_size:s.fund_support_title_font_size||'28', fund_support_content:s.fund_support_content||'[]', fund_support_qr_url:s.fund_support_qr_path?(uploadUrl(s.fund_support_qr_path)||''):'', footer_author_text:s.footer_author_text||'', footer_author_content:s.footer_author_content||'[]', footer_author_font:s.footer_author_font||'system', contact_intro_content:s.contact_intro_content||'[]', contact_footer_content:s.contact_footer_content||'[]', contact_map_url:s.contact_map_url||'', contact_map_address_content:s.contact_map_address_content||'[]', contact_temple_image_urls:templeUrls, contact_temple_image_url:templeUrls[0]||'' }; }
+function parseRichArray(value){try{const a=JSON.parse(String(value||'[]'));return Array.isArray(a)?a:[];}catch{return [];}}
+function collectRichImagePaths(value){const out=new Set();for(const item of parseRichArray(value)){if(item?.type!=='image')continue;const rel=normalizeUploadPath(item.image_path);if(rel&&rel.startsWith(`${UPLOAD_LAYOUT.richtext}/`))out.add(rel);}return out;}
+function collectRichImagePathsFromSettings(settings){const out=new Set();for(const key of RICH_SETTING_KEYS)for(const rel of collectRichImagePaths(settings?.[key]))out.add(rel);return out;}
+function materializeRichImages(value,createdFiles){const items=parseRichArray(value),out=[];for(const item of items.slice(0,800)){if(!item||typeof item!=='object')continue;if(item.type==='image'){let rel=normalizeUploadPath(item.image_path);if(item.image_data){rel=writeImageData(item.image_data,UPLOAD_LAYOUT.richtext);createdFiles.push(rel);}if(!rel||!rel.startsWith(`${UPLOAD_LAYOUT.richtext}/`))continue;out.push({type:'image',image_path:rel,alt:String(item.alt||'').slice(0,240),width:[25,33,50,66,75,100].includes(Number(item.width))?Number(item.width):100,align:['left','center','right','justify'].includes(String(item.align||''))?String(item.align):'center'});continue;}out.push(item);}return JSON.stringify(out);}
+function publicRichContent(value){const out=[];for(const item of parseRichArray(value).slice(0,800)){if(item?.type==='image'){const rel=normalizeUploadPath(item.image_path);if(!rel||!rel.startsWith(`${UPLOAD_LAYOUT.richtext}/`))continue;const copy={...item,image_url:uploadUrl(rel)||''};delete copy.image_path;out.push(copy);}else out.push(item);}return JSON.stringify(out);}
+function publicSettings(s){ const templePaths=[...new Set([...settingPathArray(s.contact_temple_image_paths), ...(s.contact_temple_image_path?[s.contact_temple_image_path]:[])])].map(normalizeUploadPath).filter((p)=>p&&p.startsWith(`${UPLOAD_LAYOUT.temple}/`)).slice(0,10); const templeUrls=templePaths.map(uploadUrl).filter(Boolean); return { tree_title:s.tree_title, tree_subtitle:s.tree_subtitle, tree_subtitle_content:publicRichContent(s.tree_subtitle_content||'[]'), clan_name:s.clan_name, tree_footer_content:publicRichContent(s.tree_footer_content||'[]'), gallery_intro_content:publicRichContent(s.gallery_intro_content||'[]'), gallery_footer_content:publicRichContent(s.gallery_footer_content||'[]'), public_comments_enabled:s.public_comments_enabled, accent_theme:s.accent_theme, tree_font:s.tree_font||'system', tree_title_font_size:s.tree_title_font_size||'28', clan_name_font_size:s.clan_name_font_size||'66', logo_url:s.site_logo_path?(uploadUrl(s.site_logo_path)||'/assets/logo.png'):'/assets/logo.png', fund_support_enabled:s.fund_support_enabled||'0', fund_support_title:s.fund_support_title||'', fund_support_title_font_size:s.fund_support_title_font_size||'28', fund_support_content:publicRichContent(s.fund_support_content||'[]'), fund_support_qr_url:s.fund_support_qr_path?(uploadUrl(s.fund_support_qr_path)||''):'', footer_author_text:s.footer_author_text||'', footer_author_content:publicRichContent(s.footer_author_content||'[]'), footer_author_font:s.footer_author_font||'system', contact_intro_content:publicRichContent(s.contact_intro_content||'[]'), contact_footer_content:publicRichContent(s.contact_footer_content||'[]'), contact_map_url:s.contact_map_url||'', contact_map_address_content:publicRichContent(s.contact_map_address_content||'[]'), contact_temple_image_urls:templeUrls, contact_temple_image_url:templeUrls[0]||'', welcome_popup_enabled:s.welcome_popup_enabled||'0', welcome_popup_content:publicRichContent(s.welcome_popup_content||'[]') }; }
 function friendlyDbError(e){ const m=String(e?.message||e); if(m.includes('UNIQUE constraint failed: users.username'))return 'Username đã tồn tại.'; return m.slice(0,500); }
 function dateStamp(){ return new Date().toISOString().slice(0,10); }
 function strongHumanPassword(){ return `GiaPha-${randomToken(9)}-7a!`; }
