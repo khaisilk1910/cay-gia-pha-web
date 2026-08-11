@@ -2,7 +2,7 @@
 const fs=require('node:fs');const os=require('node:os');const path=require('node:path');const assert=require('node:assert/strict');
 const root=path.resolve(__dirname,'..');const read=f=>fs.readFileSync(path.join(root,f),'utf8');
 const pkg=JSON.parse(read('package.json')),db=read('lib/db.js'),server=read('server.js'),html=read('public/contact.html'),js=read('public/contact.js'),adminHtml=read('public/admin.html'),adminJs=read('public/admin.js'),css=read('public/styles.css');
-assert.equal(pkg.version,'1.0.23');
+assert.ok(/^1\.0\.(?:2[3-9]|[3-9]\d|\d{3,})$/.test(pkg.version),`expected version >= 1.0.23, got ${pkg.version}`);
 assert.match(db,/contact_intro_content: '\[\]'/);assert.match(db,/contact_footer_content: '\[\]'/);assert.match(db,/contact_temple_image_paths: '\[\]'/);assert.match(db,/slice\(0,10\)/);
 assert.match(server,/contact_temple_image_data_list/);assert.match(server,/remove_contact_temple_images/);assert.match(server,/contact_temple_image_urls:templeUrls/);assert.match(server,/80 \* 1024 \* 1024/);
 assert.match(html,/id="contactIntro"/);assert.match(html,/id="contactFooterSummary"/);assert.match(html,/id="contactTempleGrid"/);assert.doesNotMatch(html,/Mở Google Maps/);assert.doesNotMatch(html,/<h2>Chỉ đường<\/h2>/);

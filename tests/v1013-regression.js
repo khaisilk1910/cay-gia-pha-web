@@ -62,7 +62,7 @@ try{
   vm.createContext(ctx);vm.runInContext(app,ctx);
   vm.runInContext(`state.people=${JSON.stringify(all)};state.byId=new Map(state.people.map(p=>[p.id,p]));`,ctx);
   assert.equal(vm.runInContext(`crossBranchMarriage(state.byId.get(${JSON.stringify(man.id)}),state.byId.get(${JSON.stringify(wife.id)}))`,ctx),true,'Hôn phối Chi A - Chi B phải được nhận diện');
-  assert.equal(vm.runInContext(`relationshipCaption({person:state.byId.get(${JSON.stringify(former.id)}),unit:{primary:{id:${JSON.stringify(man.id)}}}})`,ctx),'Vợ cũ','Cây phải ghi rõ Vợ cũ cho quan hệ đã ly hôn');
+  assert.match(vm.runInContext(`relationshipCaption({person:state.byId.get(${JSON.stringify(former.id)}),unit:{primary:{id:${JSON.stringify(man.id)}}}})`,ctx),/^Vợ (?:cũ|\d+ · cũ)$/,'Cây phải ghi rõ thứ tự và trạng thái vợ cũ cho quan hệ đã ly hôn');
   const layout=vm.runInContext('buildLayout(state.people)',ctx);
   assert.ok(layout.paths.some(x=>x.includes('spouse cross-branch')),'Đường hôn phối khác Chi phải được đánh dấu');
   assert.ok(layout.paths.some(x=>x.includes('spouse divorced')),'Đường với vợ/chồng đã ly hôn phải là nét ly hôn');

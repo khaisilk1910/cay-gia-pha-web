@@ -3,7 +3,7 @@
 const state = {
   settings: {}, people: [], byId: new Map(), stats: {}, traffic: {}, comments: [], branches: [], activeBranch: null,
   zoom: .8, panX: 0, panY: 0, stageW: 900, stageH: 500,
-  selectedGeneration: 'all', search: '', dragging: false, dragOrigin: null,
+  selectedGeneration: 'all', search: '', dragging: false, dragOrigin: null, dragStart:null, dragMoved:false, suppressClickUntil:0,
   auth: null, pollTimer: null, trafficTimer: null, selectedBranch: new URLSearchParams(location.search).get('chi') || '',
   collapsedFamilies: new Set(),
   statsList: { key:'', label:'', query:'', page:1, pageSize:100 },
@@ -37,11 +37,14 @@ function bindUI() {
   });
   const viewport=$('#treeViewport');
   viewport.addEventListener('pointerdown', e => {
-    if (e.button!==0 || e.target.closest('.person-node,.branch-toggle')) return;
-    state.dragging=true; state.dragOrigin={x:e.clientX-state.panX,y:e.clientY-state.panY}; viewport.classList.add('dragging'); $('#treeStage').classList.add('drag-immediate'); viewport.setPointerCapture(e.pointerId);
+    if (e.button!==0 || e.target.closest('.branch-toggle')) return;
+    // Chuột vẫn ưu tiên click thẻ cá thể; cảm ứng có thể bắt đầu kéo ngay trên thẻ.
+    if(e.pointerType!=='touch' && e.target.closest('.person-node')) return;
+    state.dragging=true; state.dragMoved=false; state.dragStart={x:e.clientX,y:e.clientY}; state.dragOrigin={x:e.clientX-state.panX,y:e.clientY-state.panY}; viewport.classList.add('dragging'); $('#treeStage').classList.add('drag-immediate');
+    try{viewport.setPointerCapture(e.pointerId);}catch{}
   });
-  viewport.addEventListener('pointermove', e => { if(!state.dragging)return; state.panX=e.clientX-state.dragOrigin.x; state.panY=e.clientY-state.dragOrigin.y; applyTransform(); });
-  const stopDrag=e=>{ if(!state.dragging)return; state.dragging=false; viewport.classList.remove('dragging'); $('#treeStage').classList.remove('drag-immediate'); try{viewport.releasePointerCapture(e.pointerId);}catch{} };
+  viewport.addEventListener('pointermove', e => { if(!state.dragging)return; const dx=e.clientX-state.dragStart.x,dy=e.clientY-state.dragStart.y;if(Math.hypot(dx,dy)>5)state.dragMoved=true; state.panX=e.clientX-state.dragOrigin.x; state.panY=e.clientY-state.dragOrigin.y; applyTransform(); });
+  const stopDrag=e=>{ if(!state.dragging)return; if(state.dragMoved)state.suppressClickUntil=Date.now()+350; state.dragging=false; viewport.classList.remove('dragging'); $('#treeStage').classList.remove('drag-immediate'); try{viewport.releasePointerCapture(e.pointerId);}catch{} };
   viewport.addEventListener('pointerup',stopDrag); viewport.addEventListener('pointercancel',stopDrag);
   viewport.addEventListener('wheel', e => {
     if (!e.ctrlKey && Math.abs(e.deltaY) < Math.abs(e.deltaX)) return;
@@ -136,7 +139,7 @@ function renderRichText(element,value,fallback='',options={}){if(!element)return
 function renderFundSupport(){const section=$('#fundSupport');if(!section)return;const tokens=publicFundSupportTokens(state.settings.fund_support_content);const title=String(state.settings.fund_support_title||'').trim();const qrUrl=String(state.settings.fund_support_qr_url||'').trim();const enabled=String(state.settings.fund_support_enabled||'0')==='1';const show=enabled&&!!(qrUrl||title||tokens.length);section.classList.toggle('hidden',!show);if(!show)return;const titleEl=$('#fundSupportTitle');if(titleEl){titleEl.textContent=title||'Ủng hộ quỹ dòng họ';titleEl.style.fontSize=`${Math.min(44,Math.max(18,Number(state.settings.fund_support_title_font_size)||28))}px`;}const content=$('#fundSupportContent');if(content){renderRichText(content,state.settings.fund_support_content,'',{size:16,align:'left'});content.classList.toggle('hidden',!tokens.length);}const wrap=$('#fundSupportQrWrap'),img=$('#fundSupportQr');section.classList.toggle('no-qr',!qrUrl);if(wrap&&img){wrap.classList.toggle('hidden',!qrUrl);if(qrUrl){img.onerror=()=>{wrap.classList.add('hidden');section.classList.add('no-qr');};img.onload=()=>{wrap.classList.remove('hidden');section.classList.remove('no-qr');};img.src=qrUrl;}}}
 function renderBrandAndFooter(){const logo=$('#brandLogo');if(logo){logo.onerror=()=>{logo.onerror=null;logo.src='/assets/logo.png';};logo.src=state.settings.logo_url||'/assets/logo.png';}renderFundSupport();const clan=state.settings.clan_name||'Gia đình';renderRichText($('#treeFooterContent'),state.settings.tree_footer_content,`${clan} · Dữ liệu gia đình được trình bày với ưu tiên quyền riêng tư.`,{size:14,align:'center'});const author=$('#footerAuthor');if(author){const has=renderRichText(author,state.settings.footer_author_content,state.settings.footer_author_text||'',{size:14,align:'center'});author.classList.toggle('hidden',!has);}}
 function crossBranchMarriage(a,b){const aa=new Set(a?.branch_ids||[]),bb=new Set(b?.branch_ids||[]);if(!aa.size||!bb.size)return false;for(const id of aa)if(bb.has(id))return false;return true;}
-function renderLegend(){const host=$('#treeLegend');if(!host)return;const parts=[];if(state.people.some(p=>p.gender==='male'))parts.push('<span><i class="legend-dot male"></i> Nam</span>');if(state.people.some(p=>p.gender==='female'))parts.push('<span><i class="legend-dot female"></i> Nữ</span>');if(state.people.some(p=>p.gender==='other'))parts.push('<span><i class="legend-dot other"></i> Khác</span>');if(state.people.some(p=>p.father_id||p.mother_id))parts.push('<span><i class="legend-line parent"></i> Cha/mẹ – con</span>');if(state.people.some(p=>p.is_adopted))parts.push('<span><i class="legend-line adopted"></i> Con nuôi</span>');if(state.people.some(p=>(p.divorced_spouse_ids||[]).length))parts.push('<span><i class="legend-line divorced"></i> Đã ly hôn</span>');let cross=false;for(const p of state.people){for(const sid of p.spouse_ids||[]){const sp=state.byId.get(sid);if(sp&&crossBranchMarriage(p,sp)){cross=true;break;}}if(cross)break;}if(cross)parts.push('<span><i class="legend-line cross-branch"></i> Hôn phối khác Chi</span>');parts.push('<span class="privacy-note">🔒 Một số thông tin có thể được ẩn theo quyền riêng tư.</span>');host.innerHTML=parts.join('');}
+function renderLegend(){const host=$('#treeLegend');if(!host)return;const parts=[];if(state.people.some(p=>p.gender==='male'))parts.push('<span><i class="legend-dot male"></i> Nam</span>');if(state.people.some(p=>p.gender==='female'))parts.push('<span><i class="legend-dot female"></i> Nữ</span>');if(state.people.some(p=>p.gender==='other'))parts.push('<span><i class="legend-dot other"></i> Khác</span>');if(state.people.some(p=>p.father_id||p.mother_id))parts.push('<span><i class="legend-line parent"></i> Cha/mẹ – con</span>');if(state.people.some(p=>p.is_adopted))parts.push('<span><i class="legend-line adopted"></i> Con nuôi</span>');if(state.people.some(p=>(p.step_parent_ids||[]).length))parts.push('<span><i class="legend-line stepchild"></i> Con riêng</span>');if(state.people.some(p=>(p.divorced_spouse_ids||[]).length))parts.push('<span><i class="legend-line divorced"></i> Đã ly hôn</span>');let cross=false;for(const p of state.people){for(const sid of p.spouse_ids||[]){const sp=state.byId.get(sid);if(sp&&crossBranchMarriage(p,sp)){cross=true;break;}}if(cross)break;}if(cross)parts.push('<span><i class="legend-line cross-branch"></i> Hôn phối khác Chi</span>');parts.push('<span class="privacy-note">🔒 Một số thông tin có thể được ẩn theo quyền riêng tư.</span>');host.innerHTML=parts.join('');}
 
 function renderBranchSelector(){
   const select=$('#branchSelect'); if(!select)return;
@@ -211,13 +214,13 @@ function renderTree() {
   $('#treeEmpty').classList.toggle('hidden',allPeople.length>0);
   if(!allPeople.length){ $('#treeStage').style.width='1px'; $('#treeStage').style.height='1px'; return; }
   const layout=buildLayout(people);
-  const toggles=buildFamilyToggles(allPeople,layout.nodes,state.collapsedFamilies);
+  const toggles=buildFamilyToggles(allPeople,layout.nodes,state.collapsedFamilies,layout.familyAnchors);
   state.stageW=layout.width; state.stageH=layout.height;
   const stage=$('#treeStage'); stage.style.width=`${layout.width}px`;stage.style.height=`${layout.height}px`;
   const svg=$('#treeLines'); svg.setAttribute('viewBox',`0 0 ${layout.width} ${layout.height}`); svg.setAttribute('width',layout.width);svg.setAttribute('height',layout.height);svg.innerHTML=layout.paths.join('');
   $('#treeNodes').innerHTML=layout.nodes.map(renderPersonNode).join('')+toggles.map(renderBranchToggle).join('');
   $$('.person-node').forEach(el=>{
-    el.addEventListener('click',()=>openDetail(el.dataset.id));
+    el.addEventListener('click',()=>{if(Date.now()<state.suppressClickUntil)return;openDetail(el.dataset.id);});
     el.addEventListener('keydown',e=>{if(e.key==='Enter'||e.key===' '){e.preventDefault();openDetail(el.dataset.id);}});
   });
   $$('.branch-toggle').forEach(btn=>btn.addEventListener('click',e=>{
@@ -266,7 +269,7 @@ function visiblePeopleForCollapse(people,collapsedFamilies){
   }
   return people.filter(p=>!hidden.has(p.id));
 }
-function buildFamilyToggles(allPeople,nodes,collapsedFamilies){
+function buildFamilyToggles(allPeople,nodes,collapsedFamilies,familyAnchors=null){
   const positions=new Map(nodes.map(n=>[n.person.id,n]));
   const allIds=new Set(allPeople.map(p=>p.id));
   const families=new Map();
@@ -281,8 +284,9 @@ function buildFamilyToggles(allPeople,nodes,collapsedFamilies){
   for(const fam of families.values()){
     const parentPos=fam.parentIds.map(id=>positions.get(id)).filter(Boolean);
     if(!parentPos.length)continue;
-    const x=avg(parentPos.map(p=>p.cx));
-    const sourceY=parentPos.length>=2?Math.min(...parentPos.map(p=>p.y))+124:Math.max(...parentPos.map(p=>p.bottom))+2;
+    const anchor=familyAnchors?.get?.(fam.key)||null;
+    const x=anchor?.x??avg(parentPos.map(p=>p.cx));
+    const sourceY=anchor?.y??(parentPos.length>=2?Math.min(...parentPos.map(p=>p.y))+124:Math.max(...parentPos.map(p=>p.bottom))+2);
     out.push({key:fam.key,x,y:sourceY+22,collapsed:collapsedFamilies.has(fam.key),childCount:fam.children.length});
   }
   return out;
@@ -293,17 +297,22 @@ function renderBranchToggle(t){
   return `<button type="button" class="branch-toggle${t.collapsed?' collapsed':''}" style="left:${round(t.x-13)}px;top:${round(t.y-13)}px" data-family-key="${attr(t.key)}" title="${attr(title)}" aria-label="${attr(title)}">${label}</button>`;
 }
 
+function orderedSpouseIds(person){const ids=[...new Set((person?.spouse_ids||[]).filter(Boolean))],preferred=[...new Set((person?.spouse_order_ids||[]).filter(id=>ids.includes(id)))];return [...preferred,...ids.filter(id=>!preferred.includes(id))];}
+function spouseOrdinalLabel(primary,index,total){if(total<=1)return primary?.gender==='male'?'Vợ':primary?.gender==='female'?'Chồng':'Phối ngẫu';if(primary?.gender==='male')return index===0?'Vợ cả':`Vợ ${index+1}`;if(primary?.gender==='female')return `Chồng ${index+1}`;return `Phối ngẫu ${index+1}`;}
+function childFamilyRank(parentUnit,childUnit){const memberIndex=new Map(parentUnit.members.map((m,i)=>[m.id,i]));const candidates=[childUnit.primary,...childUnit.members.filter(m=>m.id!==childUnit.primary.id)];for(const child of candidates){const idx=[child.father_id,child.mother_id].filter(id=>memberIndex.has(id)).map(id=>memberIndex.get(id));if(idx.length)return avg(idx);}return 9999;}
+
 function buildLayout(people) {
-  const nodeW=190,nodeH=184,spouseGap=28,unitGap=46,rowGap=112,marginX=100,marginY=72;
-  const cardTop=68,cardH=112,spouseAnchorOffset=cardTop+cardH/2;
+  const nodeW=190,nodeH=184,spouseGap=28,unitGap=58,marginX=100,marginY=72;
+  const cardTop=68,cardH=112,spouseAnchorOffset=cardTop+cardH/2,multiLaneStep=12;
+  const maxSpouses=Math.max(0,...people.map(p=>orderedSpouseIds(p).length));
+  const rowGap=112+Math.max(0,maxSpouses-1)*multiLaneStep;
   const byId=new Map(people.map(p=>[p.id,p]));
   const levels=[...new Set(people.map(p=>Number(p.level)||1))].sort((a,b)=>a-b);
   const levelIndex=new Map(levels.map((v,i)=>[v,i]));
   const unitOf=new Map(); const units=[]; const unitsByLevel=new Map();
 
-  // 1) Build stable spouse units. The unit's primary person is the blood-line member,
-  // not whichever spouse happens to sort first. This prevents adding a spouse from
-  // changing the sibling order.
+  // Build spouse-connected units, but keep the blood-line primary fixed and place
+  // its spouses according to the administrator-defined marriage order.
   for(const level of levels){
     const row=people.filter(p=>(Number(p.level)||1)===level);
     const visited=new Set(); const rowUnits=[];
@@ -314,48 +323,38 @@ function buildLayout(people) {
         const id=queue.shift(); if(visited.has(id))continue;
         const m=byId.get(id); if(!m || (Number(m.level)||1)!==level)continue;
         visited.add(id); members.push(m);
-        for(const sid of m.spouse_ids||[]){
-          const sp=byId.get(sid);
-          if(sp && (Number(sp.level)||1)===level && !visited.has(sid)) queue.push(sid);
-        }
+        for(const sid of m.spouse_ids||[]){const sp=byId.get(sid);if(sp&&(Number(sp.level)||1)===level&&!visited.has(sid))queue.push(sid);}
       }
-      const lineageCandidates=members.filter(m=>[m.father_id,m.mother_id].some(pid=>byId.has(pid) && (Number(byId.get(pid).level)||1)<level));
+      const lineageCandidates=members.filter(m=>[m.father_id,m.mother_id].some(pid=>byId.has(pid)&&(Number(byId.get(pid).level)||1)<level));
       const primary=sortPeople(lineageCandidates.length?lineageCandidates:members)[0];
+      const directOrder=orderedSpouseIds(primary); const directRank=new Map(directOrder.map((id,i)=>[id,i]));
       members.sort((a,b)=>{
         if(a.id===primary.id)return -1;if(b.id===primary.id)return 1;
-        return genderRank(a)-genderRank(b)||personSort(a,b);
+        const ar=directRank.has(a.id)?directRank.get(a.id):9999,br=directRank.has(b.id)?directRank.get(b.id):9999;
+        return ar-br||genderRank(a)-genderRank(b)||personSort(a,b);
       });
       const ownWidth=members.length*nodeW+Math.max(0,members.length-1)*spouseGap;
       const u={id:`u:${primary.id}`,level,members,primary,ownWidth,width:ownWidth,children:[],parents:[],x:0,y:0,cx:0};
-      rowUnits.push(u); units.push(u); for(const m of members)unitOf.set(m.id,u);
+      rowUnits.push(u);units.push(u);for(const m of members)unitOf.set(m.id,u);
     }
     unitsByLevel.set(level,rowUnits);
   }
 
-  // 2) Connect family units from parents to children. A child unit receives one
-  // parent family unit, keeping a real tree for layout even when data is incomplete.
   for(const u of units){
     const parentUnits=[];
-    for(const m of u.members){
-      for(const pid of [m.father_id,m.mother_id].filter(Boolean)){
-        const pu=unitOf.get(pid); if(pu && pu!==u && (levelIndex.get(pu.level)??-1)<(levelIndex.get(u.level)??999) && !parentUnits.includes(pu)) parentUnits.push(pu);
-      }
-    }
+    for(const m of u.members){for(const pid of [m.father_id,m.mother_id].filter(Boolean)){const pu=unitOf.get(pid);if(pu&&pu!==u&&(levelIndex.get(pu.level)??-1)<(levelIndex.get(u.level)??999)&&!parentUnits.includes(pu))parentUnits.push(pu);}}
     parentUnits.sort((a,b)=>(levelIndex.get(b.level)-levelIndex.get(a.level))||personSort(a.primary,b.primary));
-    const parent=parentUnits[0]||null;
-    if(parent){u.parents=[parent];parent.children.push(u);}
+    const parent=parentUnits[0]||null;if(parent){u.parents=[parent];parent.children.push(u);}
   }
 
   const unitSort=(a,b)=>personSort(a.primary,b.primary);
-  for(const u of units)u.children.sort(unitSort);
+  for(const u of units)u.children.sort((a,b)=>childFamilyRank(u,a)-childFamilyRank(u,b)||unitSort(a,b));
 
-  // 3) Bottom-up subtree width: parent center is exactly the center of the whole
-  // descendant band, not just the center of its own card/spouse pair.
   const calcWidth=(u,seen=new Set())=>{
-    if(seen.has(u.id))return u.ownWidth; seen.add(u.id);
+    if(seen.has(u.id))return u.ownWidth;seen.add(u.id);
     if(!u.children.length){u.width=u.ownWidth;return u.width;}
     const childrenWidth=u.children.reduce((sum,c,i)=>sum+calcWidth(c,new Set(seen))+(i?unitGap:0),0);
-    u.width=Math.max(u.ownWidth,childrenWidth); return u.width;
+    u.width=Math.max(u.ownWidth,childrenWidth);return u.width;
   };
   const roots=units.filter(u=>!u.parents.length).sort((a,b)=>(levelIndex.get(a.level)-levelIndex.get(b.level))||unitSort(a,b));
   roots.forEach(r=>calcWidth(r));
@@ -363,109 +362,70 @@ function buildLayout(people) {
   const positions=new Map();
   const place=(u,left)=>{
     const childTotal=u.children.reduce((sum,c,i)=>sum+c.width+(i?unitGap:0),0);
-    const contentW=Math.max(u.ownWidth,childTotal||0);
-    const base=left+(u.width-contentW)/2;
-    let ownLeft=base+(contentW-u.ownWidth)/2;
-    u.x=ownLeft; u.y=marginY+(levelIndex.get(u.level)||0)*(nodeH+rowGap); u.cx=left+u.width/2;
-    u.members.forEach((m,i)=>{
-      const px=ownLeft+i*(nodeW+spouseGap);
-      positions.set(m.id,{x:px,y:u.y,cx:px+nodeW/2,cy:u.y+nodeH/2,bottom:u.y+nodeH,top:u.y,nodeW,nodeH,person:m,unit:u});
-    });
-    if(u.children.length){
-      let childLeft=base+(contentW-childTotal)/2;
-      for(const c of u.children){place(c,childLeft);childLeft+=c.width+unitGap;}
-    }
+    const contentW=Math.max(u.ownWidth,childTotal||0),base=left+(u.width-contentW)/2;
+    const ownLeft=base+(contentW-u.ownWidth)/2;
+    u.x=ownLeft;u.y=marginY+(levelIndex.get(u.level)||0)*(nodeH+rowGap);u.cx=left+u.width/2;
+    u.members.forEach((m,i)=>{const px=ownLeft+i*(nodeW+spouseGap);positions.set(m.id,{x:px,y:u.y,cx:px+nodeW/2,cy:u.y+nodeH/2,bottom:u.y+nodeH,top:u.y,nodeW,nodeH,person:m,unit:u});});
+    if(u.children.length){let childLeft=base+(contentW-childTotal)/2;for(const c of u.children){place(c,childLeft);childLeft+=c.width+unitGap;}}
   };
-  let cursor=marginX;
-  for(const r of roots){place(r,cursor);cursor+=r.width+unitGap*1.5;}
+  let cursor=marginX;for(const r of roots){place(r,cursor);cursor+=r.width+unitGap*1.5;}
 
-  // Orphans/cyclic leftovers are placed deterministically at the end of their rows.
-  for(const level of levels){
-    const row=unitsByLevel.get(level)||[]; const missing=row.filter(u=>!positions.has(u.primary.id)).sort(unitSort);
-    if(!missing.length)continue;
-    let x=Math.max(marginX,...[...positions.values()].filter(p=>(Number(p.person.level)||1)===level).map(p=>p.x+nodeW+unitGap));
-    for(const u of missing){u.width=u.ownWidth;place(u,x);x+=u.width+unitGap;}
-  }
+  for(const level of levels){const row=unitsByLevel.get(level)||[],missing=row.filter(u=>!positions.has(u.primary.id)).sort(unitSort);if(!missing.length)continue;let x=Math.max(marginX,...[...positions.values()].filter(p=>(Number(p.person.level)||1)===level).map(p=>p.x+nodeW+unitGap));for(const u of missing){u.width=u.ownWidth;place(u,x);x+=u.width+unitGap;}}
 
-  const minX=Math.min(...[...positions.values()].map(p=>p.x),0);
-  if(minX<marginX){const d=marginX-minX;for(const pos of positions.values()){pos.x+=d;pos.cx+=d;}for(const u of units){u.x+=d;u.cx+=d;}}
-  const maxX=Math.max(...[...positions.values()].map(p=>p.x+nodeW),600);
-  const maxY=Math.max(...[...positions.values()].map(p=>p.y+nodeH),400);
-  const width=maxX+marginX,height=maxY+marginY;
-  const paths=[];
+  const minX=Math.min(...[...positions.values()].map(p=>p.x),0);if(minX<marginX){const d=marginX-minX;for(const pos of positions.values()){pos.x+=d;pos.cx+=d;}for(const u of units){u.x+=d;u.cx+=d;}}
+  const maxX=Math.max(...[...positions.values()].map(p=>p.x+nodeW),600),maxY=Math.max(...[...positions.values()].map(p=>p.y+nodeH),400);
+  const width=maxX+marginX,height=maxY+marginY+(maxSpouses>1?14+(maxSpouses-1)*multiLaneStep:0);const paths=[];
 
-  // Spouse line crosses the exact vertical centre of the information cards.
-  // Keep this in sync with .person-label top/height in styles.css.
-  const spouseEdges=[];const drawn=new Set();
-  for(const p of people){
-    const a=positions.get(p.id);if(!a)continue;
-    for(const sid of p.spouse_ids||[]){
-      const b=positions.get(sid);if(!b)continue;
-      const key=[p.id,sid].sort().join('|');if(drawn.has(key))continue;drawn.add(key);
-      spouseEdges.push({key,p,sid,a,b,unitId:a.unit?.id||b.unit?.id||key});
-    }
-  }
-  const spouseYByPair=new Map();const edgesByUnit=new Map();
+  const spouseEdges=[],drawn=new Set();
+  for(const p of people){const a=positions.get(p.id);if(!a)continue;for(const sid of p.spouse_ids||[]){const b=positions.get(sid);if(!b)continue;const key=[p.id,sid].sort().join('|');if(drawn.has(key))continue;drawn.add(key);spouseEdges.push({key,p,sid,a,b,unitId:a.unit?.id||b.unit?.id||key});}}
+  const marriageAnchors=new Map(),edgesByUnit=new Map();
   for(const edge of spouseEdges){if(!edgesByUnit.has(edge.unitId))edgesByUnit.set(edge.unitId,[]);edgesByUnit.get(edge.unitId).push(edge);}
   for(const edges of edgesByUnit.values()){
-    edges.sort((e1,e2)=>{const i1=Math.max(e1.a.unit?.members?.findIndex(x=>x.id===e1.p.id)??0,e1.a.unit?.members?.findIndex(x=>x.id===e1.sid)??0);const i2=Math.max(e2.a.unit?.members?.findIndex(x=>x.id===e2.p.id)??0,e2.a.unit?.members?.findIndex(x=>x.id===e2.sid)??0);return i1-i2||e1.key.localeCompare(e2.key);});
-    const laneStep=7;
+    edges.sort((e1,e2)=>{const unit=e1.a.unit||e1.b.unit;const idx=new Map((unit?.members||[]).map((m,i)=>[m.id,i]));const r1=avg([idx.get(e1.p.id)??999,idx.get(e1.sid)??999]),r2=avg([idx.get(e2.p.id)??999,idx.get(e2.sid)??999]);return r1-r2||e1.key.localeCompare(e2.key);});
+    const multiple=edges.length>1;
     edges.forEach((edge,index)=>{
       const left=edge.a.cx<edge.b.cx?edge.a:edge.b,right=edge.a.cx<edge.b.cx?edge.b:edge.a;
-      const laneOffset=(index-(edges.length-1)/2)*laneStep;
-      const y=Math.min(left.y,right.y)+spouseAnchorOffset+laneOffset;
-      spouseYByPair.set(edge.key,y);
-      const spouse=byId.get(edge.sid);const div=(edge.p.divorced_spouse_ids||[]).includes(edge.sid)||(spouse?.divorced_spouse_ids||[]).includes(edge.p.id);const cross=crossBranchMarriage(edge.p,spouse);
-      paths.push(`<path class="relation-line spouse${div?' divorced':''}${cross?' cross-branch':''}" d="M ${round(left.x+nodeW)} ${round(y)} H ${round(right.x)}"/>`);
+      const spouse=byId.get(edge.sid),div=(edge.p.divorced_spouse_ids||[]).includes(edge.sid)||(spouse?.divorced_spouse_ids||[]).includes(edge.p.id),cross=crossBranchMarriage(edge.p,spouse);
+      const cls=`relation-line spouse${div?' divorced':''}${cross?' cross-branch':''}`;
+      if(!multiple){
+        const y=Math.min(left.y,right.y)+spouseAnchorOffset;
+        marriageAnchors.set(edge.key,{x:avg([left.cx,right.cx]),y});
+        paths.push(`<path class="${cls}" d="M ${round(left.x+nodeW)} ${round(y)} H ${round(right.x)}"/>`);
+      }else{
+        // Multiple marriages use separate lanes below the cards. This prevents a
+        // connector to Vợ 2/Vợ 3 from being drawn through the Vợ cả card.
+        const laneY=Math.max(left.bottom,right.bottom)+14+index*multiLaneStep;
+        marriageAnchors.set(edge.key,{x:avg([left.cx,right.cx]),y:laneY});
+        paths.push(`<path class="${cls} spouse-multi" d="M ${round(left.cx)} ${round(left.bottom-2)} V ${round(laneY)} H ${round(right.cx)} V ${round(right.bottom-2)}"/>`);
+      }
     });
   }
 
-  // Parent-child connectors are grouped by the exact father/mother pair. This is
-  // essential for people with multiple spouses: each child branch originates from
-  // the correct couple, while child placement remains fixed by birth order.
   const families=new Map();
-  for(const child of people){
-    const parentIds=[child.father_id,child.mother_id].filter(pid=>positions.has(pid));
-    if(!parentIds.length)continue;
-    const key=parentIds.slice().sort().join('|');
-    if(!families.has(key))families.set(key,{parentIds,children:[]});
-    families.get(key).children.push(child);
-  }
+  for(const child of people){const parentIds=[child.father_id,child.mother_id].filter(pid=>positions.has(pid));if(!parentIds.length)continue;const key=parentIds.slice().sort().join('|');if(!families.has(key))families.set(key,{key,parentIds,children:[]});families.get(key).children.push(child);}
   for(const fam of families.values()){
-    const parentPos=fam.parentIds.map(id=>positions.get(id)).filter(Boolean);
-    if(!parentPos.length)continue;
-    const childEntries=sortPeople(fam.children).map(child=>({child,pos:positions.get(child.id)})).filter(x=>x.pos);
-    if(!childEntries.length)continue;
-    const sourceX=avg(parentPos.map(p=>p.cx));
-    // With a couple, start the descendant trunk exactly at the midpoint of the
-    // spouse connector so the horizontal marriage line and vertical child line
-    // visibly meet. With a single known parent, start below that person's card.
-    const sourceY=parentPos.length>=2?(spouseYByPair.get(fam.parentIds.slice().sort().join('|'))??(Math.min(...parentPos.map(p=>p.y))+spouseAnchorOffset)):Math.max(...parentPos.map(p=>p.bottom))+2;
-    const targetY=Math.min(...childEntries.map(x=>x.pos.top));
-    const railY=sourceY+(targetY-sourceY)*.48;
+    const parentPos=fam.parentIds.map(id=>positions.get(id)).filter(Boolean);if(!parentPos.length)continue;
+    const childEntries=sortPeople(fam.children).map(child=>({child,pos:positions.get(child.id)})).filter(x=>x.pos);if(!childEntries.length)continue;
+    const marriage=marriageAnchors.get(fam.key);const sourceX=marriage?.x??avg(parentPos.map(p=>p.cx));const sourceY=marriage?.y??(parentPos.length>=2?(Math.min(...parentPos.map(p=>p.y))+spouseAnchorOffset):Math.max(...parentPos.map(p=>p.bottom))+2);
+    const targetY=Math.min(...childEntries.map(x=>x.pos.top)),railY=sourceY+(targetY-sourceY)*.48;
     paths.push(`<path class="relation-line" d="M ${round(sourceX)} ${round(sourceY)} V ${round(railY)}"/>`);
-    const xs=childEntries.map(x=>x.pos.cx);
-    // The rail must include sourceX even with exactly one child. In v1.0.5 the
-    // one-child case produced two parallel vertical segments whenever the child
-    // was not exactly under the couple midpoint, leaving a visible gap.
-    const railXs=[sourceX,...xs];
-    const railMin=Math.min(...railXs),railMax=Math.max(...railXs);
-    if(Math.abs(railMax-railMin)>.05)paths.push(`<path class="relation-line" d="M ${round(railMin)} ${round(railY)} H ${round(railMax)}"/>`);
-    for(const {child,pos} of childEntries){
-      paths.push(`<path class="relation-line${child.is_adopted?' adopted':''}" d="M ${round(pos.cx)} ${round(railY)} V ${round(pos.top-2)}"/>`);
-    }
+    const xs=childEntries.map(x=>x.pos.cx),railXs=[sourceX,...xs],railMin=Math.min(...railXs),railMax=Math.max(...railXs);if(Math.abs(railMax-railMin)>.05)paths.push(`<path class="relation-line" d="M ${round(railMin)} ${round(railY)} H ${round(railMax)}"/>`);
+    for(const {child,pos} of childEntries)paths.push(`<path class="relation-line${child.is_adopted?' adopted':''}" d="M ${round(pos.cx)} ${round(railY)} V ${round(pos.top-2)}"/>`);
   }
-  return {width,height,paths,nodes:[...positions.values()]};
+  // Con riêng: step_parent_ids là cha/mẹ kế. Vẽ thêm một đường riêng biệt,
+  // không thay đổi quan hệ cha/mẹ huyết thống và không dùng kiểu Con nuôi.
+  for(const child of people){const childPos=positions.get(child.id);if(!childPos)continue;for(const stepId of child.step_parent_ids||[]){const stepPos=positions.get(stepId);if(!stepPos)continue;const bioIds=[child.father_id,child.mother_id].filter(Boolean);const bioId=bioIds.find(id=>(byId.get(stepId)?.spouse_ids||[]).includes(id));const marriageKey=bioId?[stepId,bioId].sort().join('|'):'';const anchor=marriageKey?marriageAnchors.get(marriageKey):null;const sx=anchor?.x??stepPos.cx,sy=anchor?.y??stepPos.bottom;const tx=childPos.cx+10,ty=childPos.top-2,mid=sy+(ty-sy)*.58;paths.push(`<path class="relation-line stepchild" d="M ${round(sx)} ${round(sy)} V ${round(mid)} H ${round(tx)} V ${round(ty)}"/>`);}}
+  return {width,height,paths,nodes:[...positions.values()],familyAnchors:marriageAnchors};
 }
 
 function renderPersonNode(pos){
   const p=pos.person; const gender=['male','female','other'].includes(p.gender)?p.gender:'other'; const img=p.image_url||`/assets/avatar-${gender==='other'?'placeholder':gender}.svg`;
   const life=lifeText(p); const age=ageText(p); const order=relationshipCaption(pos);
   const privacy=p.privacy_mode&&p.privacy_mode!=='public'?`<span class="privacy-badge" title="Thông tin được giới hạn">🔒</span>`:'';
-  const adopted=p.is_adopted?`<span class="adopt-badge" title="Con nuôi">A</span>`:'';
+  const adopted=p.is_adopted?`<span class="adopt-badge" title="Con nuôi">A</span>`:''; const stepchild=(p.step_parent_ids||[]).length?`<span class="step-badge" title="Con riêng của vợ/chồng">R</span>`:'';
   const candle=p.is_deceased?`<span class="memorial-candle" title="Đã mất" aria-label="Đã mất"><img src="/assets/candle.svg" alt=""></span>`:'';
   return `<div class="person-node gender-${gender}${p.is_deceased?' deceased':''}${p.privacy_mode==='private'?' private':''}" style="left:${round(pos.x)}px;top:${round(pos.y)}px" data-id="${attr(p.id)}" data-level="${Number(p.level)||1}" data-search="${attr(`${p.full_name||''} ${p.birth_date||''}`.toLocaleLowerCase('vi'))}" tabindex="0" role="button" aria-label="${attr(p.full_name||'Cá thể')}">
-    <div class="avatar-wrap">${adopted}<img class="person-avatar" src="${attr(img)}" alt="" loading="lazy">${privacy}${candle}</div>
+    <div class="avatar-wrap">${adopted}${stepchild}<img class="person-avatar" src="${attr(img)}" alt="" loading="lazy">${privacy}${candle}</div>
     <div class="person-label">${order?`<span class="person-order">${escapeHtml(order)}</span>`:''}<span class="person-name" title="${attr(p.full_name||'')}">${escapeHtml(p.full_name||'')}</span>${life?`<span class="person-life">${escapeHtml(life)}</span>`:''}${age?`<span class="person-age">${escapeHtml(age)}</span>`:''}</div>
   </div>`;
 }
@@ -485,20 +445,16 @@ function ageText(p){
   return (p.is_deceased||p.death_date)?`Thọ ${age} tuổi`:`${age} tuổi`;
 }
 function childOrderText(p){
+  if(p.is_inlaw)return '';
   const n=Number(p.birth_order); if(!Number.isFinite(n)||n<=0)return '';
   return `Con thứ ${n}`;
 }
 function relationshipCaption(pos){
-  const p=pos?.person||{};
-  const primaryId=pos?.unit?.primary?.id||'';
-  // Inside a spouse unit, the primary person is the blood-line member chosen by
-  // buildLayout. Any other member is an in-law and should not inherit the
-  // primary person's sibling ordinal.
-  if(primaryId && p.id!==primaryId){
-    const primary=state.byId.get(primaryId);const former=(p.divorced_spouse_ids||[]).includes(primaryId)||(primary?.divorced_spouse_ids||[]).includes(p.id);
-    if(p.gender==='female')return former?'Vợ cũ':'Vợ';
-    if(p.gender==='male')return former?'Chồng cũ':'Chồng';
-    return former?'Phối ngẫu cũ':'Phối ngẫu';
+  const p=pos?.person||{},primaryId=pos?.unit?.primary?.id||'';
+  if(primaryId&&p.id!==primaryId){
+    const primary=state.byId.get(primaryId),former=(p.divorced_spouse_ids||[]).includes(primaryId)||(primary?.divorced_spouse_ids||[]).includes(p.id),order=orderedSpouseIds(primary),index=order.indexOf(p.id);
+    if(index>=0&&order.length>1){const label=spouseOrdinalLabel(primary,index,order.length);return former?`${label} · cũ`:label;}
+    if(p.gender==='female')return former?'Vợ cũ':'Vợ';if(p.gender==='male')return former?'Chồng cũ':'Chồng';return former?'Phối ngẫu cũ':'Phối ngẫu';
   }
   return childOrderText(p);
 }
@@ -515,7 +471,7 @@ function applyTransform(){ $('#treeStage').style.transform=`translate(${state.pa
 function updateZoomLabel(){ $('#zoomReset').textContent=`${Math.round(state.zoom*100)}%`; }
 
 function openDetail(id){const p=state.byId.get(id);if(!p)return;const relatives=relativeGroups(p);const gender=['male','female','other'].includes(p.gender)?p.gender:'other';const img=p.image_url||`/assets/avatar-${gender==='other'?'placeholder':gender}.svg`;
-  const detail=$('#detailContent');detail.innerHTML=`<div class="detail-hero" style="--node-color:var(--${gender})"><img class="detail-avatar" src="${attr(img)}" alt=""><h2>${escapeHtml(p.full_name||'')}</h2><div class="detail-sub">${escapeHtml(lifeText(p))}</div><div class="detail-tags"><span class="tag">Đời ${Number(p.level)||1}</span>${p.family_code?`<span class="tag">${escapeHtml(p.family_code)}</span>`:''}${p.is_adopted?'<span class="tag">Con nuôi</span>':''}${p.privacy_mode!=='public'?'<span class="tag">🔒 Riêng tư</span>':''}${(p.branch_names||[]).map(name=>`<span class="tag branch-tag">Chi ${escapeHtml(name)}</span>`).join('')}</div></div>
+  const detail=$('#detailContent');detail.innerHTML=`<div class="detail-hero" style="--node-color:var(--${gender})"><img class="detail-avatar" src="${attr(img)}" alt=""><h2>${escapeHtml(p.full_name||'')}</h2><div class="detail-sub">${escapeHtml(lifeText(p))}</div><div class="detail-tags"><span class="tag">Đời ${Number(p.level)||1}</span>${p.family_code?`<span class="tag">${escapeHtml(p.family_code)}</span>`:''}${p.is_adopted?'<span class="tag">Con nuôi</span>':''}${(p.step_parent_ids||[]).length?'<span class="tag">Con riêng</span>':''}${p.is_inlaw?'<span class="tag">Dâu / Rể</span>':''}${p.privacy_mode!=='public'?'<span class="tag">🔒 Riêng tư</span>':''}${(p.branch_names||[]).map(name=>`<span class="tag branch-tag">Chi ${escapeHtml(name)}</span>`).join('')}</div></div>
   ${p.privacy_mode==='private'?`<div class="detail-section"><h3>Quyền riêng tư</h3><p class="detail-text">Thông tin chi tiết của thành viên này được gia đình đặt ở chế độ riêng tư.</p></div>`:`
   <div class="detail-section"><h3>Thông tin</h3><div class="detail-grid"><div class="detail-item"><span>Sinh</span><strong>${escapeHtml(p.birth_date||'Chưa rõ')}</strong></div><div class="detail-item"><span>Mất</span><strong>${escapeHtml(p.is_deceased?(p.death_date||'Chưa rõ'):'Đang sống')}</strong></div><div class="detail-item"><span>Nơi sinh</span><strong>${escapeHtml(p.birth_place||'Chưa rõ')}</strong></div><div class="detail-item"><span>Nơi mất</span><strong>${escapeHtml(p.is_deceased?(p.death_place||'Chưa rõ'):'—')}</strong></div><div class="detail-item"><span>Nghề nghiệp</span><strong>${escapeHtml(p.occupation||'Chưa cập nhật')}</strong></div></div></div>
   ${p.details?`<div class="detail-section"><h3>Tiểu sử / ghi chú</h3><div class="detail-text">${escapeHtml(p.details)}</div></div>`:''}
@@ -524,9 +480,10 @@ function openDetail(id){const p=state.byId.get(id);if(!p)return;const relatives=
   $('#detailPanel').classList.add('open');$('#detailPanel').setAttribute('aria-hidden','false');$('#panelBackdrop').classList.add('open');
   $$('.relative-chip',detail).forEach(b=>b.onclick=()=>openDetail(b.dataset.id));
 }
-function relativeGroups(p){const by=state.byId;const parents=[p.father_id,p.mother_id].filter(Boolean).map(id=>by.get(id)).filter(Boolean);const allSpouses=(p.spouse_ids||[]).map(id=>by.get(id)).filter(Boolean);const divorced=new Set(p.divorced_spouse_ids||[]);const currentSpouses=allSpouses.filter(x=>!divorced.has(x.id));const formerSpouses=allSpouses.filter(x=>divorced.has(x.id));const children=state.people.filter(c=>c.father_id===p.id||c.mother_id===p.id);const childGroups=new Map();for(const child of children){const partnerId=child.father_id===p.id?child.mother_id:child.father_id;const key=partnerId||'';if(!childGroups.has(key))childGroups.set(key,[]);childGroups.get(key).push(child);}return {person:p,parents,currentSpouses,formerSpouses,children,childGroups};}
+function relativeGroups(p){const by=state.byId;const parents=[p.father_id,p.mother_id].filter(Boolean).map(id=>by.get(id)).filter(Boolean);const spouseOrder=orderedSpouseIds(p),allSpouses=spouseOrder.map(id=>by.get(id)).filter(Boolean);const divorced=new Set(p.divorced_spouse_ids||[]);const currentSpouses=allSpouses.filter(x=>!divorced.has(x.id));const formerSpouses=allSpouses.filter(x=>divorced.has(x.id));const children=state.people.filter(c=>c.father_id===p.id||c.mother_id===p.id);const rawGroups=new Map();for(const child of children){const partnerId=child.father_id===p.id?child.mother_id:child.father_id;const key=partnerId||'';if(!rawGroups.has(key))rawGroups.set(key,[]);rawGroups.get(key).push(child);}const childGroups=new Map();for(const id of spouseOrder)if(rawGroups.has(id))childGroups.set(id,rawGroups.get(id));for(const [id,items] of rawGroups)if(!childGroups.has(id))childGroups.set(id,items);const stepParents=(p.step_parent_ids||[]).map(id=>by.get(id)).filter(Boolean);const stepChildren=state.people.filter(c=>(c.step_parent_ids||[]).includes(p.id));return {person:p,parents,stepParents,currentSpouses,formerSpouses,children,stepChildren,childGroups};}
 function relativeChip(x,extra=''){const branches=(x.branch_names||[]).length?` <small>${escapeHtml((x.branch_names||[]).join(' / '))}</small>`:'';return `<button class="relative-chip" data-id="${attr(x.id)}">${escapeHtml(x.full_name)}${extra?` <em>${escapeHtml(extra)}</em>`:''}${branches}</button>`;}
-function relativeSection(groups){const parts=[];if(groups.parents.length)parts.push(`<div><strong>Cha mẹ</strong><div class="relative-list">${groups.parents.map(x=>relativeChip(x)).join('')}</div></div>`);if(groups.currentSpouses.length)parts.push(`<div><strong>Vợ / chồng hiện tại</strong><div class="relative-list">${groups.currentSpouses.map(x=>relativeChip(x,crossBranchMarriage(groups.person,x)?'khác Chi':'')).join('')}</div></div>`);if(groups.formerSpouses.length)parts.push(`<div><strong>Vợ / chồng đã ly hôn</strong><div class="relative-list">${groups.formerSpouses.map(x=>relativeChip(x,crossBranchMarriage(groups.person,x)?'khác Chi':'')).join('')}</div></div>`);for(const [partnerId,children] of groups.childGroups){const partner=partnerId?state.byId.get(partnerId):null;const label=partner?`Con với ${partner.full_name}`:'Con (chưa rõ người còn lại)';parts.push(`<div><strong>${escapeHtml(label)}</strong><div class="relative-list">${sortPeople(children).map(x=>relativeChip(x)).join('')}</div></div>`);}return parts.length?`<div class="detail-section"><h3>Quan hệ gia đình</h3><div style="display:grid;gap:13px">${parts.join('')}</div></div>`:'';}
+function spouseRelativeExtra(person,spouse){const order=orderedSpouseIds(person),idx=order.indexOf(spouse.id),parts=[];if(order.length>1&&idx>=0)parts.push(spouseOrdinalLabel(person,idx,order.length));if(crossBranchMarriage(person,spouse))parts.push('khác Chi');return parts.join(' · ');}
+function relativeSection(groups){const parts=[];if(groups.parents.length)parts.push(`<div><strong>Cha mẹ</strong><div class="relative-list">${groups.parents.map(x=>relativeChip(x)).join('')}</div></div>`);if(groups.stepParents?.length)parts.push(`<div><strong>Cha / mẹ kế</strong><div class="relative-list">${groups.stepParents.map(x=>relativeChip(x,'quan hệ con riêng')).join('')}</div></div>`);if(groups.currentSpouses.length)parts.push(`<div><strong>Vợ / chồng hiện tại</strong><div class="relative-list">${groups.currentSpouses.map(x=>relativeChip(x,spouseRelativeExtra(groups.person,x))).join('')}</div></div>`);if(groups.formerSpouses.length)parts.push(`<div><strong>Vợ / chồng đã ly hôn</strong><div class="relative-list">${groups.formerSpouses.map(x=>relativeChip(x,spouseRelativeExtra(groups.person,x))).join('')}</div></div>`);if(groups.stepChildren?.length)parts.push(`<div><strong>Con riêng của vợ/chồng</strong><div class="relative-list">${sortPeople(groups.stepChildren).map(x=>relativeChip(x,'con riêng')).join('')}</div></div>`);for(const [partnerId,children] of groups.childGroups){const partner=partnerId?state.byId.get(partnerId):null;const label=partner?`Con với ${partner.full_name}`:'Con (chưa rõ người còn lại)';parts.push(`<div><strong>${escapeHtml(label)}</strong><div class="relative-list">${sortPeople(children).map(x=>relativeChip(x)).join('')}</div></div>`);}return parts.length?`<div class="detail-section"><h3>Quan hệ gia đình</h3><div style="display:grid;gap:13px">${parts.join('')}</div></div>`:'';}
 function closeDetail(){ $('#detailPanel').classList.remove('open');$('#detailPanel').setAttribute('aria-hidden','true');$('#panelBackdrop').classList.remove('open'); }
 
 function openComments(){ $('#commentPanel').classList.add('open');setTimeout(()=>$('#commentMessage')?.focus(),180); }

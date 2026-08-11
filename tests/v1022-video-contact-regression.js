@@ -18,7 +18,7 @@ const adminJs=read('public/admin.js');
 const publicUi=read('public/public-ui.js');
 const css=read('public/styles.css');
 
-assert.match(pkg.version,/^1\.0\.(?:22|23)$/);
+assert.ok(/^1\.0\.(?:2[2-9]|[3-9]\d|\d{3,})$/.test(pkg.version),`expected version >= 1.0.22, got ${pkg.version}`);
 assert.match(dbSource,/CREATE TABLE IF NOT EXISTS gallery_videos/);
 assert.match(dbSource,/CREATE TABLE IF NOT EXISTS contact_people/);
 assert.match(dbSource,/phone_content TEXT NOT NULL DEFAULT '\[\]'/);

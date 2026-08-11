@@ -235,3 +235,45 @@ body.public-page{font-family:var(--tree-font)}
 .contact-footer #contactFooterSummary{width:min(980px,100%);text-align:center}
 @media(max-width:800px){.contact-map-card,.contact-map-card iframe{min-height:380px;height:380px}.contact-temple-grid,.contact-temple-grid.temple-count-2{grid-template-columns:1fr}.contact-temple-grid.temple-count-1 .contact-temple-card,.contact-temple-card{aspect-ratio:4/3}.contact-image-nav{width:42px;height:42px}.contact-image-prev{left:7px}.contact-image-next{right:7px}.settings-floating-save{right:14px;bottom:78px;min-width:130px;padding:11px 15px}.settings-temple-gallery{grid-template-columns:repeat(2,minmax(0,1fr))}}
 @media(prefers-reduced-motion:reduce){.contact-image-nav,.contact-temple-card img{transition:none!important}}
+
+/* v1.0.26 · explicit marriage order for multi-spouse families */
+.spouse-order-field{padding:12px 14px;border:1px solid #dfd5c2;border-radius:14px;background:linear-gradient(135deg,#fbf8f1,#f6f1e7)}
+.spouse-order-editor{display:grid;gap:7px;margin-top:3px}
+.spouse-order-empty{padding:10px 12px;border:1px dashed #d8cfbf;border-radius:10px;color:#989184;background:#fff9;font-size:9px}
+.spouse-order-row{display:grid;grid-template-columns:minmax(64px,auto) 1fr auto;gap:10px;align-items:center;padding:8px 9px;border:1px solid #dfd8cb;border-radius:11px;background:#fff;box-shadow:0 5px 14px rgba(68,55,37,.035)}
+.spouse-order-no{display:inline-flex;justify-content:center;align-items:center;min-height:28px;padding:4px 8px;border-radius:999px;background:#efe5d2;color:#725b36;font-size:9px;font-weight:800;white-space:nowrap}
+.spouse-order-name{display:flex;min-width:0;flex-direction:column;gap:2px}.spouse-order-name strong{font-size:10px;color:#303a37;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.spouse-order-name small{font-size:8px;color:#8c867c;text-transform:none;letter-spacing:0}
+.spouse-order-actions{display:flex;gap:5px}.spouse-order-actions button{width:30px;height:30px;border:1px solid #d8d0c3;border-radius:9px;background:#faf8f3;color:#665c4c;cursor:pointer;font-size:14px}.spouse-order-actions button:hover:not(:disabled){background:#eee5d6;transform:translateY(-1px)}.spouse-order-actions button:disabled{opacity:.35;cursor:default}
+.spouse-cell-item b{color:#80663c;font-size:8px}
+@media(max-width:640px){.spouse-order-row{grid-template-columns:1fr auto}.spouse-order-no{grid-column:1/-1;justify-self:start}.spouse-order-name strong{white-space:normal}}
+
+
+/* v1.0.26 · responsive polish, touch pan, uniform gallery tiles, in-law & stepchild */
+.tree-viewport{touch-action:none;overscroll-behavior:contain;-webkit-user-select:none;user-select:none}
+.gallery-photo-image,.gallery-photo-card:nth-child(5n+2) .gallery-photo-image,.gallery-photo-card:nth-child(5n+4) .gallery-photo-image{aspect-ratio:4/3!important}
+.compact-section-head{align-items:center!important;margin-bottom:18px}.compact-section-head .eyebrow{font-size:11px}.compact-section-head .gallery-count{margin-left:auto}
+.relation-line.stepchild{stroke:#b88743;stroke-dasharray:7 4;stroke-width:1.55}.legend-line.stepchild{border-top:2px dashed #b88743}
+.step-badge{position:absolute;left:52px;top:5px;width:22px;height:22px;border-radius:50%;display:grid;place-items:center;font-size:9px;font-weight:800;background:#fff7e9;color:#8b6330;box-shadow:0 3px 12px rgba(0,0,0,.1);border:1px solid #d8b06d}
+.form-field,.relation-picker,.settings-grid>*{min-width:0}.input,.select,.textarea{max-width:100%;box-sizing:border-box}.modal-card{max-width:calc(100vw - 24px)}
+@media(max-width:900px){
+  .gallery-main,.contact-main,main{max-width:100%;min-width:0}.gallery-overview,.gallery-album-view,.gallery-video-overview,.contact-section{width:100%;box-sizing:border-box}
+  .site-header{gap:8px}.header-actions{min-width:0;overflow-x:auto;scrollbar-width:none}.header-actions::-webkit-scrollbar{display:none}
+  .tree-toolbar>*{min-width:0}.tree-toolbar .zoom-tools{flex:0 0 auto}.tree-toolbar .generation-filter{min-width:0}
+}
+@media(max-width:700px){
+  html,body{max-width:100%;overflow-x:hidden}.site-header{padding-inline:10px}.brand{min-width:0}.brand-copy{min-width:0}.brand-copy strong{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:145px}.gallery-header-link{white-space:nowrap}
+  .gallery-hero{padding:26px 8px 20px}.gallery-hero h1{font-size:clamp(34px,12vw,48px)}.gallery-intro,.contact-hero-intro{font-size:13px!important;line-height:1.4}.gallery-search{margin-top:16px}
+  .gallery-overview,.gallery-album-view,.gallery-video-overview{padding:13px;border-radius:18px}.gallery-album-grid{grid-template-columns:1fr;gap:11px}.gallery-album-cover{height:180px}.gallery-photo-grid{grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}.gallery-photo-copy{padding-inline:2px}.gallery-photo-copy strong{font-size:10px}.gallery-photo-copy small{font-size:8px}
+  .compact-section-head{flex-direction:row!important;align-items:center!important;gap:10px}.compact-section-head .gallery-count{margin-left:auto}.contact-section-head.compact-section-head{flex-direction:row!important}
+  .contact-section{padding:14px}.contact-card-grid{gap:10px}.contact-map-card,.contact-map-card iframe{height:320px;min-height:320px}.contact-temple-grid{gap:10px}.contact-temple-card{border-radius:14px}
+  .tree-shell{width:100%}.tree-viewport{height:68dvh;min-height:420px}.drag-hint{font-size:10px;bottom:10px;white-space:nowrap}.legend{font-size:9px}
+  .admin-modal{padding:0;place-items:stretch}.modal-card{width:100%;max-width:none;height:100dvh;max-height:100dvh;border-radius:0;border-left:0;border-right:0}.modal-head{padding:14px 16px}.modal-body{padding:12px 14px 18px}.modal-actions{position:sticky;bottom:0;z-index:3;padding:10px 14px;flex-wrap:wrap}.modal-actions>*{min-height:42px}.form-grid{gap:10px}.form-field.full{grid-column:1}.relation-options{position:fixed;left:12px;right:12px;top:auto;bottom:74px;max-height:45dvh;z-index:120}.relation-option{align-items:flex-start}.relation-option span{white-space:normal;text-align:right}.place-textarea,.textarea{min-height:90px}.image-preview{flex:0 0 auto}
+  .people-page-controls{gap:4px}.page-btn{padding:7px 7px}.page-jump{gap:4px}.page-jump input{width:48px}.traffic-card{justify-content:center}.fund-support{width:100%!important;box-sizing:border-box}
+}
+@media(max-width:420px){
+  .gallery-photo-grid{grid-template-columns:1fr 1fr}.gallery-photo-image{border-radius:12px}.gallery-photo-copy strong{max-width:100%}.gallery-album-card-copy strong{font-size:15px}
+  .site-header{height:62px}.brand-logo{width:30px;height:30px}.brand #clanName,.brand strong{font-size:14px}.gallery-header-link{font-size:9px;padding:0 6px}.admin-link{padding:7px}
+  .tree-toolbar{gap:6px}.print-tree-btn,.tool-btn,.zoom-label,.icon-button{min-width:34px;height:34px}.branch-switcher{min-width:145px}.search-box{height:38px}.gen-btn{height:32px;padding-inline:8px}
+  .detail-panel{width:100vw;max-width:100vw;padding:14px}.detail-grid{grid-template-columns:1fr}.comment-panel{left:6px;right:6px;width:auto}.stats-panel{left:4px;right:4px;width:auto}
+  .contact-person-card{grid-template-columns:66px minmax(0,1fr);padding:10px}.contact-person-photo{width:66px;height:82px}.contact-person-name{font-size:18px}.contact-map-card,.contact-map-card iframe{height:280px;min-height:280px}
+}

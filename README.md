@@ -1,8 +1,15 @@
-# Cây Gia Phả Web v1.0.23
+# Cây Gia Phả Web v1.0.26
 
-Bản v1.0.23 nâng cấp trang Liên hệ với Rich Text cho phần giới thiệu/chân trang, Google Maps toàn chiều rộng, tối đa 10 ảnh nhà thờ Tổ và nút Lưu cài đặt nổi luôn sẵn sàng khi cuộn.
+Bản v1.0.26 giữ nguyên toàn bộ tính năng v1.0.25 và cập nhật cách triển khai Docker: hỗ trợ dùng tag `latest`, tự đồng bộ mã ứng dụng vào thư mục host `/opt/cay-gia-pha-web/app`, trong khi dữ liệu vẫn nằm riêng tại `/opt/cay-gia-pha-web/data`.
 
-# Cây Gia Phả Web
+## Cập nhật v1.0.26
+
+- Giữ nguyên toàn bộ tính năng và dữ liệu của v1.0.25; không có migration phá vỡ dữ liệu.
+- Bản Docker hỗ trợ triển khai trực tiếp bằng `ghcr.io/khaisilk1910/cay-gia-pha-web:latest` với `pull_policy: always`, không bắt buộc dùng biến `${IMAGE_TAG}`.
+- Khi dùng Stack mới, thư mục host `/opt/cay-gia-pha-web/` chứa rõ ràng `app/` (mã ứng dụng đang chạy) và `data/` (database, uploads, backup/restore).
+- Mỗi khi image `latest` thay đổi, entrypoint so sánh mã build và tự thay `app/` bằng bản ứng dụng mới từ image; `data/` không bị ghi đè. Vì vậy cập nhật container vẫn giữ nguyên dữ liệu gia phả.
+- Image không khai báo Docker anonymous volume cho thư mục lưu trữ; Stack dùng bind mount trực tiếp `/opt/cay-gia-pha-web:/var/lib/cay-gia-pha` để tránh dữ liệu ứng dụng rơi vào volume ẩn ngoài ý muốn.
+- Lưu ý: các lớp image, metadata container và Docker Engine vẫn do Docker quản lý trong `data-root` của Docker. Stack chỉ đưa **mã ứng dụng và dữ liệu của Cây Gia Phả Web** ra `/opt/cay-gia-pha-web/`.
 
 ## Cập nhật v1.0.23
 
@@ -325,4 +332,4 @@ Khi nâng cấp từ v1.0.3 bằng hotfix, bảng `branches` được tạo tự
 
 ## Docker / Container
 
-Bản Docker-ready tương ứng được đóng gói riêng trong `cay-gia-pha-web-v1.0.23-docker.zip`, kèm `Dockerfile`, Compose và Portainer Stack.
+Bản Docker-ready tương ứng được đóng gói riêng trong `cay-gia-pha-web-v1.0.26-docker.zip`, kèm `Dockerfile`, Compose và Portainer Stack.

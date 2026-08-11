@@ -3,15 +3,18 @@ services:
     build:
       context: .
       dockerfile: Dockerfile
-    image: cay-gia-pha-web:1.0.23
+    image: cay-gia-pha-web:1.0.26
     container_name: cay-gia-pha-web
     restart: unless-stopped
     init: true
     ports:
       - "${WEB_PORT:-8787}:8787"
     environment:
+      TZ: "Asia/Ho_Chi_Minh"
       HOST: "0.0.0.0"
       PORT: "8787"
+      STORAGE_ROOT: "/var/lib/cay-gia-pha"
+      APP_DIR: "/var/lib/cay-gia-pha/app"
       DATA_DIR: "/var/lib/cay-gia-pha/data"
       ADMIN_USERNAME: "${ADMIN_USERNAME:-admin}"
       ADMIN_PASSWORD: "${ADMIN_PASSWORD:-}"
@@ -20,10 +23,6 @@ services:
       TRUST_PROXY: "${TRUST_PROXY:-0}"
       MAX_BACKUP_MB: "${MAX_BACKUP_MB:-1024}"
     volumes:
-      - gia_pha_storage:/var/lib/cay-gia-pha
+      - "${HOST_STORAGE_DIR:-/opt/cay-gia-pha-web}:/var/lib/cay-gia-pha"
     security_opt:
       - no-new-privileges:true
-
-volumes:
-  gia_pha_storage:
-    name: cay-gia-pha-web-data
