@@ -202,6 +202,22 @@ async function handleApi(req, res, url) {
     return json(res,200,{settings:publicSettings(settings),contributions:rows.slice(start,start+pageSize),top:store.topContributors(topCount),years:store.contributionYears(),summary:store.contributionSummary(all),pagination:{page,page_size:pageSize,total,total_pages:totalPages}});
   }
 
+  if (method === 'GET' && pathname === '/api/public/news') {
+    const settings=store.settings(); const all=store.listNews({publicOnly:true,full:false});
+    const q=sanitizeText(url.searchParams.get('q')||'',180).toLocaleLowerCase('vi');
+    const year=String(url.searchParams.get('year')||'').trim();
+    const pageSize=Math.max(1,Math.min(50,Math.trunc(Number(url.searchParams.get('page_size'))||12)));
+    let rows=all.filter((r)=>(!q||`${r.title||''} ${r.summary||''}`.toLocaleLowerCase('vi').includes(q))&&(!/^\d{4}$/.test(year)||String(r.published_date||'').startsWith(`${year}-`)));
+    const total=rows.length,totalPages=Math.max(1,Math.ceil(total/pageSize)),page=Math.min(totalPages,Math.max(1,Math.trunc(Number(url.searchParams.get('page'))||1))),start=(page-1)*pageSize;
+    return json(res,200,{settings:publicSettings(settings),news:rows.slice(start,start+pageSize),years:store.newsYears(),pagination:{page,page_size:pageSize,total,total_pages:totalPages}});
+  }
+  const publicNewsMatch=pathname.match(/^\/api\/public\/news\/([^/]+)$/);
+  if(method==='GET' && publicNewsMatch){
+    const article=store.getNews(publicNewsMatch[1],{publicOnly:true});
+    if(!article)return json(res,404,{error:'Không tìm thấy tin tức công khai này.'});
+    return json(res,200,{settings:publicSettings(store.settings()),article});
+  }
+
   if (method === 'GET' && pathname === '/api/public/comments') {
     return json(res, 200, { comments: store.listComments(false, 200) });
   }
@@ -304,6 +320,32 @@ async function handleApi(req, res, url) {
     if (contributionMatch && method === 'DELETE') {
       if (!hasRole(actor,['admin','editor'])) return forbidden(res);
       const deleted=store.deleteContribution(contributionMatch[1],actor.id);return deleted?json(res,200,{ok:true}):json(res,404,{error:'Không tìm thấy phương danh công đức.'});
+    }
+
+    if (method === 'GET' && pathname === '/api/admin/news') {
+      if (!hasRole(actor,['admin','editor','viewer'])) return forbidden(res);
+      return json(res,200,{news:store.listNews({publicOnly:false,full:false}),years:store.newsYears()});
+    }
+    if (method === 'POST' && pathname === '/api/admin/news/images') {
+      if (!hasRole(actor,['admin','editor'])) return forbidden(res);
+      const body=await readJson(req,8*1024*1024); let image='';
+      try{image=writeImageData(body.image_data,UPLOAD_LAYOUT.news);return json(res,201,{image_path:image,image_url:uploadUrl(image)});}catch(e){if(image)deleteImageFile(image);return json(res,400,{error:friendlyDbError(e)});}
+    }
+    if (method === 'POST' && pathname === '/api/admin/news') {
+      if (!hasRole(actor,['admin','editor'])) return forbidden(res);
+      const body=await readJson(req,12*1024*1024); let cover='';
+      try{if(body.cover_image_data){cover=writeImageData(body.cover_image_data,UPLOAD_LAYOUT.news);body.cover_image_path=cover;}delete body.cover_image_data;delete body.remove_cover;return json(res,201,{article:store.createNews(body,actor.id)});}catch(e){if(cover)deleteImageFile(cover);return json(res,400,{error:friendlyDbError(e)});}
+    }
+    const adminNewsMatch=pathname.match(/^\/api\/admin\/news\/([^/]+)$/);
+    if(adminNewsMatch && method==='GET'){
+      if(!hasRole(actor,['admin','editor','viewer']))return forbidden(res);const article=store.getNews(adminNewsMatch[1],{publicOnly:false});return article?json(res,200,{article}):json(res,404,{error:'Không tìm thấy tin tức.'});
+    }
+    if(adminNewsMatch && method==='PUT'){
+      if(!hasRole(actor,['admin','editor']))return forbidden(res);const current=store.getNews(adminNewsMatch[1],{publicOnly:false});if(!current)return json(res,404,{error:'Không tìm thấy tin tức.'});const body=await readJson(req,12*1024*1024);let cover='';
+      try{if(body.remove_cover)body.cover_image_path='';else if(body.cover_image_data){cover=writeImageData(body.cover_image_data,UPLOAD_LAYOUT.news);body.cover_image_path=cover;}delete body.cover_image_data;delete body.remove_cover;const article=store.updateNews(adminNewsMatch[1],body,actor.id);if(current.cover_image_path&&article?.cover_image_path!==current.cover_image_path)deleteImageFile(current.cover_image_path);return json(res,200,{article});}catch(e){if(cover)deleteImageFile(cover);return json(res,400,{error:friendlyDbError(e)});}
+    }
+    if(adminNewsMatch && method==='DELETE'){
+      if(!hasRole(actor,['admin','editor']))return forbidden(res);const deleted=store.deleteNews(adminNewsMatch[1],actor.id);if(!deleted)return json(res,404,{error:'Không tìm thấy tin tức.'});if(deleted.cover_image_path)deleteImageFile(deleted.cover_image_path);return json(res,200,{ok:true});
     }
 
     if (method === 'GET' && pathname === '/api/admin/gallery') {
@@ -651,7 +693,7 @@ function serveUpload(res, pathname) {
   let requested=''; try{requested=decodeURIComponent(pathname.slice('/uploads/'.length));}catch{return text404(res);}
   const rel=normalizeUploadPath(requested);
   if(!rel)return text404(res);
-  const allowed=[`${UPLOAD_LAYOUT.logo}/`,`${UPLOAD_LAYOUT.qrcode}/`,`${UPLOAD_LAYOUT.profiles}/`,`${UPLOAD_LAYOUT.gallery}/`,`${UPLOAD_LAYOUT.contacts}/`,`${UPLOAD_LAYOUT.temple}/`,`${UPLOAD_LAYOUT.richtext}/`];
+  const allowed=[`${UPLOAD_LAYOUT.logo}/`,`${UPLOAD_LAYOUT.qrcode}/`,`${UPLOAD_LAYOUT.profiles}/`,`${UPLOAD_LAYOUT.gallery}/`,`${UPLOAD_LAYOUT.contacts}/`,`${UPLOAD_LAYOUT.temple}/`,`${UPLOAD_LAYOUT.richtext}/`,`${UPLOAD_LAYOUT.news}/`];
   if(!allowed.some((prefix)=>rel.startsWith(prefix)))return text404(res);
   const target=uploadFullPath(rel);
   if(!target||!fs.existsSync(target)||!fs.statSync(target).isFile())return text404(res);

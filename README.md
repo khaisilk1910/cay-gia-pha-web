@@ -1,6 +1,16 @@
-# Cây Gia Phả Web v1.0.33
+# Cây Gia Phả Web v1.0.34
 
-Bản v1.0.33 loại bỏ font serif gây lỗi hiển thị dấu tiếng Việt và mở rộng bộ chọn lên **20 font**. Tất cả lựa chọn đều có chuỗi fallback ưu tiên các họ font Unicode phổ biến để tránh mất dấu trên Windows, macOS, Linux, Android và iOS. Có thể nâng trực tiếp từ v1.0.32, không cần tạo lại database.
+Bản v1.0.34 bổ sung **Tin tức dòng họ** với trang công khai hiện đại, phân trang/tìm kiếm/lọc năm, trang đọc bài riêng và khu vực **6 tin mới nhất** bên dưới QR ủng hộ trên các trang công khai. Admin có trình soạn thảo tin tức hỗ trợ định dạng văn bản, tiêu đề, danh sách, căn lề, màu/cỡ/font, liên kết, ảnh và đường phân cách; nội dung được lọc HTML an toàn trước khi lưu. Có thể nâng trực tiếp từ v1.0.33, không cần tạo lại database.
+
+## Cập nhật v1.0.34
+
+- Thêm trang `Tin tức` và API public/admin, dữ liệu lưu trong bảng `news` của SQLite.
+- Tin tức hỗ trợ ảnh đại diện; nếu không có ảnh đại diện sẽ ưu tiên ảnh đầu tiên trong bài, sau cùng dùng logo dòng họ.
+- Trang danh sách có tìm kiếm theo nội dung, lọc năm, phân trang; trang chi tiết tương thích các định dạng HTML đã cho phép trong trình soạn thảo.
+- Admin hỗ trợ thêm/sửa/xóa tin, trạng thái công khai, ngày đăng, thứ tự ưu tiên và upload ảnh trực tiếp vào nội dung.
+- Tất cả trang công khai hiển thị tối đa 6 tin mới nhất ngay dưới khối QR ủng hộ.
+- Backup dữ liệu bao gồm bảng Tin tức và thư mục `data/uploads/news`; quy tắc loại trừ `data/uploads/gallery` vẫn giữ nguyên.
+- Bổ sung regression test v1.0.34 cho database, lọc HTML, giao diện, API và khu vực tin mới nhất.
 
 ## Cập nhật v1.0.33
 
@@ -383,4 +393,4 @@ Khi nâng cấp từ v1.0.3 bằng hotfix, bảng `branches` được tạo tự
 
 ## Docker / Container
 
-Bản Docker-ready tương ứng được đóng gói riêng trong `cay-gia-pha-web-v1.0.33-docker.zip`, kèm `Dockerfile`, Compose và Portainer Stack.
+Bản Docker-ready tương ứng được đóng gói riêng trong `cay-gia-pha-web-v1.0.34-docker.zip`, kèm `Dockerfile`, Compose và Portainer Stack.

@@ -2,7 +2,7 @@
 # Dữ liệu và mã ứng dụng đều hiển thị dưới /opt/cay-gia-pha-web/ trên Ubuntu.
 services:
   gia-pha:
-    image: cay-gia-pha-web:1.0.33
+    image: cay-gia-pha-web:1.0.34
     pull_policy: never
     container_name: cay-gia-pha-web
     restart: unless-stopped

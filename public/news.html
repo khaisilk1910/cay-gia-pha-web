@@ -1,0 +1,47 @@
+<!doctype html>
+<html lang="vi">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+  <meta name="description" content="Tin tức dòng họ - cập nhật hoạt động, sự kiện và những câu chuyện mới của gia đình, dòng họ.">
+  <title>Tin tức · Cây Gia Phả</title>
+  <link rel="icon" href="/assets/logo.png">
+  <link rel="stylesheet" href="/styles.css?v=1.0.34">
+</head>
+<body class="public-page news-page">
+  <div class="ambient ambient-a"></div><div class="ambient ambient-b"></div>
+  <header class="site-header news-site-header">
+    <a class="brand" href="/" aria-label="Về cây gia phả"><img src="/assets/logo.png" alt="Logo gia phả" class="brand-logo" id="newsBrandLogo"><span class="brand-copy"><small class="brand-label">Gia Phả</small><strong id="newsClanName">Gia đình</strong></span></a>
+    <nav class="header-actions" aria-label="Điều hướng"><a class="gallery-header-link" href="/">Cây gia phả</a><a class="gallery-header-link" href="/gallery.html">Thư viện ảnh</a><a class="gallery-header-link active-public-link" href="/news.html">Tin tức</a><a class="gallery-header-link" href="/contributions.html">Công đức</a><a class="gallery-header-link" href="/contact.html">Liên hệ</a><a class="admin-link" href="/admin.html">Quản trị <span>↗</span></a></nav>
+  </header>
+
+  <main class="news-main">
+    <div id="newsListView">
+      <section class="news-hero"><div class="hero-kicker"><span class="kicker-dot"></span> Nhịp sống dòng họ</div><div class="news-hero-mark" aria-hidden="true">◇</div><h1>Tin Tức</h1><p>Những hoạt động, sự kiện, thông báo và câu chuyện mới được lưu giữ để các thế hệ luôn gần nhau hơn.</p></section>
+      <section class="news-list-section">
+        <div class="news-list-head"><div><span class="eyebrow">Tin mới & sự kiện</span><h2>Chuyện của dòng họ</h2><p>Khám phá những tin tức mới nhất và xem lại các hoạt động theo từng năm.</p></div></div>
+        <div class="news-filter-bar"><label class="news-search"><span>⌕</span><input id="newsPublicSearch" type="search" placeholder="Tìm theo tiêu đề, nội dung…" autocomplete="off"></label><label class="news-filter-field"><span>Năm</span><select id="newsPublicYear"><option value="">Tất cả</option></select></label></div>
+        <div class="news-result-meta" id="newsResultMeta">Đang tải tin tức…</div>
+        <div class="news-public-grid" id="newsPublicGrid"></div>
+        <div class="news-empty hidden" id="newsEmpty"><span>◇</span><strong>Chưa có tin tức phù hợp</strong><p>Hãy thử từ khóa khác hoặc chọn một năm khác.</p></div>
+        <div class="people-pagination news-pagination" id="newsPagination"><div class="people-page-info" id="newsPublicPageInfo">0 tin</div><div class="people-page-controls"><button class="page-btn" id="newsPublicFirstPage" type="button">Đầu</button><button class="page-btn" id="newsPublicPrevPage" type="button">← Lùi</button><label class="page-jump">Trang <input id="newsPublicPageInput" type="number" min="1" value="1" inputmode="numeric"> <span id="newsPublicPageTotal">/ 1</span></label><button class="page-btn" id="newsPublicNextPage" type="button">Tiến →</button><button class="page-btn" id="newsPublicLastPage" type="button">Cuối</button></div></div>
+      </section>
+    </div>
+
+    <article class="news-detail hidden" id="newsDetailView">
+      <div class="news-detail-nav"><a href="/news.html">← Trở lại danh sách Tin tức</a></div>
+      <div class="news-detail-hero"><div class="news-detail-cover"><img id="newsDetailCover" src="/assets/logo.png" alt=""></div><div class="news-detail-heading"><span class="news-detail-date" id="newsDetailDate"></span><h1 id="newsDetailTitle">Tin tức</h1><p id="newsDetailSummary"></p></div></div>
+      <div class="news-article-content" id="newsDetailContent"></div>
+      <div class="news-detail-bottom"><a href="/news.html">← Xem thêm tin tức dòng họ</a></div>
+    </article>
+  </main>
+
+  <footer class="site-footer news-footer">
+    <div class="footer-summary"><strong id="newsFooterClan">Gia đình</strong> · Những câu chuyện kết nối các thế hệ.</div>
+    <section class="fund-support hidden" data-shared-fund aria-label="Ủng hộ quỹ dòng họ"><div class="fund-support-glow" aria-hidden="true"></div><div class="fund-support-qr-wrap" data-fund-qr-wrap><div class="fund-support-qr-frame"><img data-fund-qr alt="Mã QR ủng hộ quỹ dòng họ"></div><span class="fund-support-scan">Quét mã để ủng hộ</span></div><div class="fund-support-copy"><span class="fund-support-kicker">Chung tay gìn giữ nguồn cội</span><div class="fund-support-content public-rich-text" data-fund-content></div></div></section>
+    <section class="latest-news-strip hidden" data-shared-latest-news aria-label="Tin tức mới nhất"><div class="latest-news-head"><div><span class="eyebrow">Tin tức dòng họ</span><h2>6 tin mới nhất</h2><p>Cập nhật những hoạt động, sự kiện và câu chuyện mới trong dòng họ.</p></div><a href="/news.html">Xem tất cả tin tức <span>→</span></a></div><div class="latest-news-grid" data-latest-news-grid></div></section>
+    <div class="traffic-row footer-traffic" id="newsTrafficStats" aria-live="polite"></div><div class="footer-author public-rich-text hidden" data-shared-author></div>
+  </footer>
+  <script src="/public-ui.js?v=1.0.34" defer></script><script src="/news.js?v=1.0.34" defer></script>
+</body>
+</html>
