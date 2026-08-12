@@ -6,7 +6,7 @@
   <meta name="description" content="Phương Danh Công Đức - trân trọng ghi nhận cá nhân, gia đình và tập thể đóng góp cho quỹ dòng họ.">
   <title>Phương Danh Công Đức · Cây Gia Phả</title>
   <link rel="icon" href="/assets/logo.png">
-  <link rel="stylesheet" href="/styles.css?v=1.0.34">
+  <link rel="stylesheet" href="/styles.css?v=1.0.35">
 </head>
 <body class="public-page contributions-page">
   <div class="ambient ambient-a"></div><div class="ambient ambient-b"></div>
@@ -40,7 +40,7 @@
 
     <section class="contribution-section contribution-top-section" aria-labelledby="contributionTopTitle">
       <div class="contribution-section-head">
-        <div><span class="eyebrow">Bảng vinh danh</span><h2 id="contributionTopTitle">Những tấm lòng nổi bật</h2><p>Tổng hợp theo Phương danh và xếp hạng theo tổng giá trị công đức.</p></div>
+        <div><span class="eyebrow">Bảng vinh danh</span><h2 id="contributionTopTitle">Những tấm lòng nổi bật</h2><p>Tổng hợp theo Phương danh + Địa chỉ và xếp hạng theo tổng giá trị công đức.</p></div>
         <span class="contribution-top-badge" id="contributionTopBadge">Top 10</span>
       </div>
       <div class="contribution-table-shell top-table-shell">
@@ -82,6 +82,25 @@
     </section>
   </main>
 
+  <div class="contribution-detail-modal hidden" id="contributionDetailModal" role="dialog" aria-modal="true" aria-labelledby="contributionDetailTitle">
+    <div class="contribution-detail-backdrop" data-contribution-detail-close></div>
+    <section class="contribution-detail-card">
+      <div class="contribution-detail-head">
+        <div><span class="eyebrow">Chi tiết công đức</span><h2 id="contributionDetailTitle">Các lần công đức</h2><p id="contributionDetailAddress"></p></div>
+        <button type="button" class="contribution-detail-close" data-contribution-detail-close aria-label="Đóng">×</button>
+      </div>
+      <div class="contribution-detail-body">
+        <div class="contribution-detail-loading hidden" id="contributionDetailLoading">Đang tải chi tiết…</div>
+        <div class="contribution-table-shell contribution-detail-table-shell">
+          <table class="contribution-public-table contribution-detail-table">
+            <thead><tr><th>STT</th><th>Nội dung công đức</th><th>Giá trị</th><th>Ngày công đức</th><th>Ghi chú</th></tr></thead>
+            <tbody id="contributionDetailBody"></tbody>
+          </table>
+        </div>
+      </div>
+    </section>
+  </div>
+
   <footer class="site-footer contributions-footer">
     <div class="footer-summary"><strong id="contributionFooterClan">Gia đình</strong> · Trân trọng những tấm lòng hướng về nguồn cội.</div>
     <section class="fund-support hidden" data-shared-fund aria-label="Ủng hộ quỹ dòng họ"><div class="fund-support-glow" aria-hidden="true"></div><div class="fund-support-qr-wrap" data-fund-qr-wrap><div class="fund-support-qr-frame"><img data-fund-qr alt="Mã QR ủng hộ quỹ dòng họ"></div><span class="fund-support-scan">Quét mã để ủng hộ</span></div><div class="fund-support-copy"><span class="fund-support-kicker">Chung tay gìn giữ nguồn cội</span><div class="fund-support-content public-rich-text" data-fund-content></div></div></section>
@@ -90,7 +109,7 @@
     <div class="footer-author public-rich-text hidden" data-shared-author></div>
   </footer>
 
-  <script src="/public-ui.js?v=1.0.34" defer></script>
-  <script src="/contributions.js?v=1.0.34" defer></script>
+  <script src="/public-ui.js?v=1.0.35" defer></script>
+  <script src="/contributions.js?v=1.0.35" defer></script>
 </body>
 </html>

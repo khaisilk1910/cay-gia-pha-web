@@ -190,8 +190,10 @@ async function handleApi(req, res, url) {
     const pageSize=Math.max(5,Math.min(100,Math.trunc(Number(url.searchParams.get('page_size'))||20)));
     let rows=all.filter((r)=>(!q||String(r.donor_name||'').toLocaleLowerCase('vi').includes(q))&&(!/^\d{4}$/.test(year)||String(r.contribution_date||'').startsWith(`${year}-`)));
     const cmpText=(a,b)=>String(a||'').localeCompare(String(b||''),'vi',{sensitivity:'base'});
-    if(sort==='amount_desc')rows.sort((a,b)=>Number(b.amount||0)-Number(a.amount||0)||String(b.contribution_date||'').localeCompare(String(a.contribution_date||''))||cmpText(a.donor_name,b.donor_name));
-    else if(sort==='amount_asc')rows.sort((a,b)=>Number(a.amount||0)-Number(b.amount||0)||String(b.contribution_date||'').localeCompare(String(a.contribution_date||''))||cmpText(a.donor_name,b.donor_name));
+    const amountKnown=(r)=>r?.amount_known===false||Number(r?.amount_known)===0?0:1;
+    const amountCmp=(a,b,dir)=>amountKnown(b)-amountKnown(a)||(dir==='asc'?Number(a.amount||0)-Number(b.amount||0):Number(b.amount||0)-Number(a.amount||0));
+    if(sort==='amount_desc')rows.sort((a,b)=>amountCmp(a,b,'desc')||String(b.contribution_date||'').localeCompare(String(a.contribution_date||''))||cmpText(a.donor_name,b.donor_name));
+    else if(sort==='amount_asc')rows.sort((a,b)=>amountCmp(a,b,'asc')||String(b.contribution_date||'').localeCompare(String(a.contribution_date||''))||cmpText(a.donor_name,b.donor_name));
     else if(sort==='date_asc')rows.sort((a,b)=>String(a.contribution_date||'').localeCompare(String(b.contribution_date||''))||cmpText(a.donor_name,b.donor_name));
     else if(sort==='year_desc')rows.sort((a,b)=>String(b.contribution_date||'').slice(0,4).localeCompare(String(a.contribution_date||'').slice(0,4))||String(b.contribution_date||'').localeCompare(String(a.contribution_date||''))||cmpText(a.donor_name,b.donor_name));
     else if(sort==='year_asc')rows.sort((a,b)=>String(a.contribution_date||'').slice(0,4).localeCompare(String(b.contribution_date||'').slice(0,4))||String(b.contribution_date||'').localeCompare(String(a.contribution_date||''))||cmpText(a.donor_name,b.donor_name));
@@ -200,6 +202,13 @@ async function handleApi(req, res, url) {
     const total=rows.length,totalPages=Math.max(1,Math.ceil(total/pageSize)),page=Math.min(totalPages,Math.max(1,Math.trunc(Number(url.searchParams.get('page'))||1))),start=(page-1)*pageSize;
     const topCount=['5','10','15','20'].includes(String(settings.contribution_top_count||''))?Number(settings.contribution_top_count):10;
     return json(res,200,{settings:publicSettings(settings),contributions:rows.slice(start,start+pageSize),top:store.topContributors(topCount),years:store.contributionYears(),summary:store.contributionSummary(all),pagination:{page,page_size:pageSize,total,total_pages:totalPages}});
+  }
+  const publicContributionGroupMatch=pathname.match(/^\/api\/public\/contributions\/group\/([a-f0-9]{32})$/i);
+  if(method==='GET'&&publicContributionGroupMatch){
+    const contributions=store.contributionGroupItems(publicContributionGroupMatch[1]);
+    if(!contributions.length)return json(res,404,{error:'Không tìm thấy các lần công đức của phương danh này.'});
+    const first=contributions[0];
+    return json(res,200,{donor_name:first.donor_name,address:first.address||'',contributions});
   }
 
   if (method === 'GET' && pathname === '/api/public/news') {

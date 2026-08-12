@@ -7,14 +7,14 @@ const assert=require('node:assert/strict');
 const root=path.join(__dirname,'..');
 const read=f=>fs.readFileSync(path.join(root,f),'utf8');
 const pkg=JSON.parse(read('package.json'));
-assert.equal(pkg.version,'1.0.34','package.json phải ở v1.0.34');
+assert.equal(pkg.version,'1.0.35','package.json phải ở v1.0.35');
 
 const publicPages=['public/index.html','public/gallery.html','public/contact.html','public/contributions.html','public/news.html'];
 for(const file of publicPages){
   const html=read(file);
   assert.match(html,/href="\/news\.html"/,`${file} phải có liên kết Tin tức`);
   assert.match(html,/data-shared-latest-news/,`${file} phải có khu vực 6 tin mới nhất dưới phần công khai`);
-  assert.match(html,/styles\.css\?v=1\.0\.34/,`${file} phải dùng cache key v1.0.34`);
+  assert.match(html,/styles\.css\?v=1\.0\.35/,`${file} phải dùng cache key v1.0.35`);
 }
 const newsHtml=read('public/news.html');
 const newsJs=read('public/news.js');

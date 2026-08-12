@@ -1,6 +1,17 @@
-# Cây Gia Phả Web v1.0.34
+# Cây Gia Phả Web v1.0.35
 
-Bản v1.0.34 bổ sung **Tin tức dòng họ** với trang công khai hiện đại, phân trang/tìm kiếm/lọc năm, trang đọc bài riêng và khu vực **6 tin mới nhất** bên dưới QR ủng hộ trên các trang công khai. Admin có trình soạn thảo tin tức hỗ trợ định dạng văn bản, tiêu đề, danh sách, căn lề, màu/cỡ/font, liên kết, ảnh và đường phân cách; nội dung được lọc HTML an toàn trước khi lưu. Có thể nâng trực tiếp từ v1.0.33, không cần tạo lại database.
+Bản v1.0.35 hoàn thiện **Bảng vinh danh Phương Danh Công Đức**: tổng hợp đúng theo cặp **Phương danh + Địa chỉ**, hỗ trợ mở popup xem từng lần công đức khi một phương danh có từ 2 lần trở lên, và cho phép để trống giá trị công đức. Có thể nâng trực tiếp từ v1.0.34; database tự bổ sung cờ dữ liệu mới, không cần tạo lại dữ liệu.
+
+## Cập nhật v1.0.35
+
+- Bảng vinh danh không còn gộp nhầm người cùng tên nhưng khác địa chỉ; khóa tổng hợp chuẩn hóa cả Phương danh và Địa chỉ.
+- Nhóm có từ 2 lần công đức trở lên có thể nhấn trực tiếp trên bảng Top để mở popup danh sách chi tiết từng lần công đức.
+- Trường **Giá trị (VNĐ)** trong Admin chuyển thành không bắt buộc. Bản ghi không nhập giá trị hiển thị dấu `—` thay vì `0 ₫`.
+- Khoản không ghi giá trị vẫn xuất hiện trong danh sách đầy đủ và popup chi tiết; nhóm chỉ toàn khoản không ghi giá trị không tham gia xếp hạng Top vì không có số tiền để xếp hạng.
+- Sắp xếp theo giá trị ưu tiên các bản ghi có số tiền trước, tránh coi khoản không nhập giá trị là 0 đồng.
+- Thống kê số Phương danh cũng phân biệt theo cặp tên + địa chỉ để nhất quán với Bảng vinh danh.
+- Database cũ tự thêm cột `contributions.amount_known`; backup cũ không có cột này vẫn khôi phục tương thích với dữ liệu giá trị hiện có.
+- Bổ sung regression test v1.0.35 cho tổng hợp tên + địa chỉ, giá trị tùy chọn, popup nhóm và migration database.
 
 ## Cập nhật v1.0.34
 
@@ -393,4 +404,4 @@ Khi nâng cấp từ v1.0.3 bằng hotfix, bảng `branches` được tạo tự
 
 ## Docker / Container
 
-Bản Docker-ready tương ứng được đóng gói riêng trong `cay-gia-pha-web-v1.0.34-docker.zip`, kèm `Dockerfile`, Compose và Portainer Stack.
+Bản Docker-ready tương ứng được đóng gói riêng trong `cay-gia-pha-web-v1.0.35-docker.zip`, kèm `Dockerfile`, Compose và Portainer Stack.

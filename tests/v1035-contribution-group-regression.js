@@ -1,0 +1,60 @@
+'use strict';
+const fs=require('node:fs');
+const os=require('node:os');
+const path=require('node:path');
+const assert=require('node:assert/strict');
+const root=path.join(__dirname,'..');
+const read=f=>fs.readFileSync(path.join(root,f),'utf8');
+const pkg=require(path.join(root,'package.json'));
+assert.equal(pkg.version,'1.0.35');
+const db=read('lib/db.js'),server=read('server.js'),html=read('public/contributions.html'),js=read('public/contributions.js'),adminHtml=read('public/admin.html'),adminJs=read('public/admin.js'),css=read('public/styles.css');
+assert.match(db,/amount_known INTEGER NOT NULL DEFAULT 1/,'DB mới phải có cờ giá trị tùy chọn');
+assert.match(db,/ALTER TABLE contributions ADD COLUMN amount_known INTEGER NOT NULL DEFAULT 1/,'DB cũ phải tự migrate amount_known');
+assert.match(db,/contributionGroupIdentity/,'Phải có định danh nhóm theo tên + địa chỉ');
+assert.ok(db.includes('`${donor}\\u0000${address}`')||db.includes('`${donor}\u0000${address}`'),'Khóa nhóm phải kết hợp tên và địa chỉ');
+assert.match(db,/contributionGroupItems/,'Phải có hàm lấy các lần công đức theo nhóm');
+assert.match(server,/publicContributionGroupMatch/,'Phải có API public xem chi tiết nhóm');
+assert.match(html,/id="contributionDetailModal"/,'Trang công đức phải có popup chi tiết');
+assert.match(js,/data-contribution-group/,'Top nhiều lần phải có thể nhấn mở chi tiết');
+assert.match(js,/contribution_count\|\|0\)>=2/,'Chỉ nhóm từ 2 lần trở lên mới mở popup');
+assert.match(adminHtml,/Giá trị \(VNĐ\)<\/label>/,'Giá trị không còn dấu bắt buộc');
+assert.doesNotMatch(adminHtml,/name="amount"[^>]*required/,'Ô giá trị không được required');
+assert.match(adminJs,/amount:String\(fd\.get\('amount'\)/,'Admin phải gửi null khi để trống giá trị');
+assert.match(css,/\.contribution-detail-modal\{/,'Phải có giao diện popup chi tiết');
+
+const tmp=fs.mkdtempSync(path.join(os.tmpdir(),'gia-pha-v1035-'));
+process.env.DATA_DIR=tmp;
+let store;
+try{
+  const {Store}=require('../lib/db');
+  store=new Store();
+  const admin=store.ensureAdmin('admin','Regression-Password-2026!',false);
+  const a1=store.createContribution({donor_name:'Nguyễn Văn A',address:'Hà Nội',contribution_content:'Đợt 1',amount:1000000,contribution_date:'2026-01-01',notes:''},admin.id);
+  const a2=store.createContribution({donor_name:'NGUYỄN VĂN A',address:'Hà   Nội',contribution_content:'Đợt 2',amount:2000000,contribution_date:'2026-02-01',notes:''},admin.id);
+  const other=store.createContribution({donor_name:'Nguyễn Văn A',address:'Hải Phòng',contribution_content:'Khác địa chỉ',amount:5000000,contribution_date:'2026-03-01',notes:''},admin.id);
+  const hiddenAmount=store.createContribution({donor_name:'Nguyễn Văn B',address:'Hà Nội',contribution_content:'Không ghi giá trị',amount:null,contribution_date:'2026-04-01',notes:''},admin.id);
+  assert.equal(hiddenAmount.amount_known,false,'Để trống giá trị phải được lưu là không ghi giá trị');
+  assert.equal(hiddenAmount.amount,0,'DB vẫn lưu số an toàn cho tương thích');
+  const top=store.topContributors(10);
+  assert.equal(top.length,2,'Nhóm chỉ có giá trị trống không tham gia xếp hạng Top');
+  assert.equal(top[0].donor_name,'Nguyễn Văn A');
+  assert.equal(top[0].address,'Hải Phòng','Người cùng tên khác địa chỉ phải là nhóm riêng');
+  const hanoi=top.find(x=>x.address==='Hà   Nội'||x.address==='Hà Nội');
+  assert.ok(hanoi,'Phải tìm thấy nhóm Hà Nội');
+  assert.equal(hanoi.amount,3000000,'Cùng tên + cùng địa chỉ chuẩn hóa phải được cộng dồn');
+  assert.equal(hanoi.contribution_count,2,'Nhóm Hà Nội phải có 2 lần');
+  assert.equal(store.contributionGroupItems(hanoi.group_key).length,2,'Popup phải lấy đúng 2 lần của nhóm');
+  assert.equal(store.contributionSummary().donors,3,'Thống kê phương danh phải phân biệt theo tên + địa chỉ');
+  const updated=store.updateContribution(a1.id,{amount:null},admin.id);
+  assert.equal(updated.amount_known,false,'Sửa về giá trị trống phải được hỗ trợ');
+  assert.ok(store.getContribution(other.id).amount_known,'Bản ghi có giá trị phải giữ trạng thái');
+
+  // Backup v1.0.34 chưa có amount_known phải khôi phục được và mặc định coi giá trị cũ là đã ghi.
+  const crypto=require('node:crypto');
+  const backup=store.exportFullBackup();
+  for(const row of backup.tables.contributions) delete row.amount_known;
+  backup.integrity.tables_sha256=crypto.createHash('sha256').update(JSON.stringify(backup.tables)).digest('hex');
+  store.restoreFullBackup(backup,admin.id,null);
+  assert.equal(store.listContributions().every(r=>r.amount_known===true),true,'Backup cũ thiếu amount_known phải mặc định là có giá trị');
+} finally {try{store?.close?.();}catch{}try{store?.db?.close?.();}catch{}fs.rmSync(tmp,{recursive:true,force:true});}
+console.log('v1035-contribution-group-regression: OK');
