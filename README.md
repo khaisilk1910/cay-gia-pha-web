@@ -1,16 +1,17 @@
-# Cây Gia Phả Web v1.0.27
+# Cây Gia Phả Web v1.0.28
 
-Bản v1.0.27 tập trung vào **Rich Text ổn định, Cài đặt dễ quản lý, popup chào mừng và bố cục nhiều đời vợ/chồng**. Dữ liệu v1.0.26 được nâng cấp trực tiếp, không cần tạo lại database.
+Bản v1.0.28 tập trung vào **popup gọn đẹp, bố cục nhiều vợ/chồng theo nhánh con và giao diện toàn chiều rộng**. Dữ liệu v1.0.27 được nâng cấp trực tiếp, không cần tạo lại database.
 
-## Cập nhật v1.0.27
+## Cập nhật v1.0.28
 
-- Sửa vòng đời Rich Text: **Enter, nhiều dòng trống và dòng trống ở cuối được giữ nguyên** sau khi Lưu → mở lại Cài đặt → sửa mục khác → Lưu lần nữa; không còn hiện tượng khoảng cách cũ bị mất sau lần lưu tiếp theo.
-- Tất cả Rich Text trong **Cài đặt** có cùng bộ công cụ định dạng (font Unicode tiếng Việt, cỡ chữ, màu, đậm, nghiêng, gạch chân, gạch ngang, căn lề, xóa định dạng) và có nút **Chèn ảnh**. Ảnh nội dung lưu riêng trong `data/uploads/richtext/`, được backup/restore cùng toàn bộ `data/`.
-- Trang **Cài đặt** được chia thành các tab chức năng: Cây gia phả, Thư viện, Ủng hộ, Liên hệ, Tác giả, Popup chào mừng, Logo & riêng tư, Sao lưu & khôi phục. Nút Lưu nổi vẫn dùng chung cho mọi tab.
-- Thêm **Popup chào mừng / thông báo** có thể bật/tắt. Nội dung là Rich Text đầy đủ và có thể chèn ảnh; giao diện modal hiện đại, responsive, có hiệu ứng và tôn trọng `prefers-reduced-motion`. Popup hiển thị một lần trong phiên trình duyệt; khi admin đổi nội dung, thông báo mới sẽ xuất hiện lại.
-- Logo admin upload được dùng làm **favicon trên tab trình duyệt** ở các trang công khai, trang in và giao diện quản trị sau khi tải Cài đặt.
-- Bố cục nhiều đời vợ/chồng được tách rõ hơn: theo thứ tự hôn phối admin đặt, **các đời trước nằm bên trái người nội tộc, đời hiện tại/cuối nằm bên phải**; các nhóm con/cháu theo từng cuộc hôn nhân có khoảng đệm ngang riêng để giảm tối đa đường nối và nhánh chồng lên nhau. Bản in/SVG dùng cùng nguyên tắc.
-- Bản Docker tiếp tục hỗ trợ `ghcr.io/khaisilk1910/cay-gia-pha-web:latest`, `pull_policy: always`, và bind mount `/opt/cay-gia-pha-web` để `app/` + `data/` đều nằm rõ ràng trên Ubuntu host.
+- Popup chào mừng **bỏ nút “Đã hiểu”**. Người xem đóng bằng nút **X**, nhấn vùng nền bên ngoài hoặc phím **Esc**; popup khóa cuộn nền trong lúc mở và tự dọn listener khi đóng.
+- Popup được thiết kế lại gọn hơn, hiện đại hơn và **không tạo thanh cuộn ngang**: card dùng `overflow-x: hidden`, nội dung/ảnh Rich Text luôn co tối đa theo chiều rộng khả dụng và chuỗi dài được tự ngắt dòng.
+- Với nhiều vợ/chồng, **đời vợ/chồng trước có nhánh con/cháu đang hiển thị sẽ được đưa ra giữa đúng vùng hậu duệ của cuộc hôn nhân đó**. Người nội tộc + đời vợ/chồng hiện tại/cuối tạo thành cụm chính; nhánh đời trước nối bằng lane riêng. Khi nhánh con bị ẩn/thu gọn hoặc không có hậu duệ hiển thị, người vợ/chồng đó tự trở lại nằm sát cụm chính. Bản in/SVG dùng cùng thuật toán.
+- Trang **Cài đặt** và vùng nội dung quản trị bỏ giới hạn `max-width`, chiếm toàn bộ chiều rộng còn lại của trình duyệt. Chuyển tab không còn gọi cuộn trang về đầu nên không bị nhảy vị trí.
+- Thanh tab Cài đặt được làm **nhỏ, hiện đại, cuộn ngang mượt trên điện thoại**, có trạng thái ARIA và sticky ngay dưới thanh tiêu đề quản trị.
+- Các trang công khai **Cây gia phả / Thư viện / Liên hệ** cùng header/footer bỏ giới hạn chiều rộng cố định; khung nội dung chính dàn theo 100% chiều rộng browser (vẫn giữ padding an toàn theo thiết bị).
+- Bổ sung regression test v1.0.28 kiểm tra popup, full-width, tab không nhảy trang, bố cục vợ/chồng theo nhánh và hành vi khi nhánh bị ẩn.
+- Bản Docker đồng bộ toàn bộ thay đổi web, tiếp tục hỗ trợ GHCR `latest`, Compose/Portainer và bind mount `/opt/cay-gia-pha-web`.
 
 ## Cập nhật v1.0.23
 
@@ -333,4 +334,4 @@ Khi nâng cấp từ v1.0.3 bằng hotfix, bảng `branches` được tạo tự
 
 ## Docker / Container
 
-Bản Docker-ready tương ứng được đóng gói riêng trong `cay-gia-pha-web-v1.0.27-docker.zip`, kèm `Dockerfile`, Compose và Portainer Stack.
+Bản Docker-ready tương ứng được đóng gói riêng trong `cay-gia-pha-web-v1.0.28-docker.zip`, kèm `Dockerfile`, Compose và Portainer Stack.

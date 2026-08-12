@@ -1,5 +1,5 @@
 'use strict';
-// Legacy v1.0.21 regression reference only; intentional blank Rich Text lines are preserved in v1.0.27.
+// Legacy v1.0.21 regression reference only; intentional blank Rich Text lines are preserved in v1.0.28.
 // while(element.lastElementChild&&!element.lastElementChild.childNodes.length)element.lastElementChild.remove()
 
 const state = {
@@ -313,8 +313,8 @@ function buildLayout(people) {
   const levelIndex=new Map(levels.map((v,i)=>[v,i]));
   const unitOf=new Map(); const units=[]; const unitsByLevel=new Map();
 
-  // Build spouse-connected units, but keep the blood-line primary fixed and place
-  // its spouses according to the administrator-defined marriage order.
+  // Build spouse-connected units. Marriage order is kept as metadata; the final
+  // horizontal position is refined after descendant subtrees have been placed.
   for(const level of levels){
     const row=people.filter(p=>(Number(p.level)||1)===level);
     const visited=new Set(); const rowUnits=[];
@@ -336,7 +336,7 @@ function buildLayout(people) {
       const ordered=[...previousIds.map(id=>spouseMap.get(id)).filter(Boolean),...extras,primary,...(currentId?[spouseMap.get(currentId)].filter(Boolean):[])];
       members.splice(0,members.length,...ordered);
       const ownWidth=members.length*nodeW+Math.max(0,members.length-1)*spouseGap;
-      const u={id:`u:${primary.id}`,level,members,primary,ownWidth,width:ownWidth,children:[],parents:[],x:0,y:0,cx:0};
+      const u={id:`u:${primary.id}`,level,members,primary,ownWidth,width:ownWidth,children:[],parents:[],x:0,y:0,cx:0,layoutLeft:0};
       rowUnits.push(u);units.push(u);for(const m of members)unitOf.set(m.id,u);
     }
     unitsByLevel.set(level,rowUnits);
@@ -367,7 +367,7 @@ function buildLayout(people) {
     const childTotal=u.children.reduce((sum,c,i)=>sum+c.width+(i?childGap(u,u.children[i-1],c):0),0);
     const contentW=Math.max(u.ownWidth,childTotal||0),base=left+(u.width-contentW)/2;
     const ownLeft=base+(contentW-u.ownWidth)/2;
-    u.x=ownLeft;u.y=marginY+(levelIndex.get(u.level)||0)*(nodeH+rowGap);u.cx=left+u.width/2;
+    u.layoutLeft=left;u.x=ownLeft;u.y=marginY+(levelIndex.get(u.level)||0)*(nodeH+rowGap);u.cx=left+u.width/2;
     u.members.forEach((m,i)=>{const px=ownLeft+i*(nodeW+spouseGap);positions.set(m.id,{x:px,y:u.y,cx:px+nodeW/2,cy:u.y+nodeH/2,bottom:u.y+nodeH,top:u.y,nodeW,nodeH,person:m,unit:u});});
     if(u.children.length){let childLeft=base+(contentW-childTotal)/2;for(let i=0;i<u.children.length;i++){const c=u.children[i];place(c,childLeft);childLeft+=c.width+(i<u.children.length-1?childGap(u,c,u.children[i+1]):0);}}
   };
@@ -375,7 +375,40 @@ function buildLayout(people) {
 
   for(const level of levels){const row=unitsByLevel.get(level)||[],missing=row.filter(u=>!positions.has(u.primary.id)).sort(unitSort);if(!missing.length)continue;let x=Math.max(marginX,...[...positions.values()].filter(p=>(Number(p.person.level)||1)===level).map(p=>p.x+nodeW+unitGap));for(const u of missing){u.width=u.ownWidth;place(u,x);x+=u.width+unitGap;}}
 
-  const minX=Math.min(...[...positions.values()].map(p=>p.x),0);if(minX<marginX){const d=marginX-minX;for(const pos of positions.values()){pos.x+=d;pos.cx+=d;}for(const u of units){u.x+=d;u.cx+=d;}}
+  // A previous spouse with a visible descendant branch becomes a satellite card
+  // centered above that marriage's descendants. Previous spouses whose branch is
+  // empty/collapsed stay beside the blood-line person. The blood-line person and
+  // current/last spouse form the core block, preferably centered over their branch.
+  const detachedMarriageAnchors=new Map();
+  const marriageChildUnits=(u,spouseId)=>u.children.filter(c=>c.members.some(m=>{const ids=[m.father_id,m.mother_id].filter(Boolean);return ids.includes(u.primary.id)&&ids.includes(spouseId);}));
+  const childGroupCenter=children=>{const left=Math.min(...children.map(c=>c.layoutLeft)),right=Math.max(...children.map(c=>c.layoutLeft+c.width));return (left+right)/2;};
+  for(const u of units){
+    const directOrder=orderedSpouseIds(u.primary).filter(id=>u.members.some(m=>m.id===id));
+    if(directOrder.length<2)continue;
+    const currentId=directOrder.at(-1)||'';
+    const detached=directOrder.slice(0,-1).map(id=>({id,children:marriageChildUnits(u,id)})).filter(x=>x.children.length);
+    if(!detached.length)continue;
+    const detachedIds=new Set(detached.map(x=>x.id));
+    const coreMembers=u.members.filter(m=>!detachedIds.has(m.id));
+    const currentChildren=currentId?marriageChildUnits(u,currentId):[];
+    const coreTarget=currentChildren.length?childGroupCenter(currentChildren):(u.layoutLeft+u.width/2);
+    const blocks=detached.map(x=>({ids:[x.id],width:nodeW,target:childGroupCenter(x.children),detachedId:x.id}));
+    if(coreMembers.length)blocks.push({ids:coreMembers.map(m=>m.id),width:coreMembers.length*nodeW+Math.max(0,coreMembers.length-1)*spouseGap,target:coreTarget,detachedId:''});
+    let blockCursor=u.layoutLeft;
+    for(const block of blocks){block.left=Math.max(block.target-block.width/2,blockCursor);blockCursor=block.left+block.width+spouseGap;}
+    const layoutRight=u.layoutLeft+u.width;
+    let lastRight=blocks.at(-1).left+blocks.at(-1).width;
+    if(lastRight>layoutRight){const shift=lastRight-layoutRight;for(const block of blocks)block.left-=shift;}
+    let firstLeft=Math.min(...blocks.map(b=>b.left));
+    if(firstLeft<u.layoutLeft){const shift=u.layoutLeft-firstLeft;for(const block of blocks)block.left+=shift;}
+    for(const block of blocks){
+      const orderedIds=u.members.map(m=>m.id).filter(id=>block.ids.includes(id));
+      orderedIds.forEach((id,i)=>{const pos=positions.get(id);if(!pos)return;const px=block.left+i*(nodeW+spouseGap);pos.x=px;pos.cx=px+nodeW/2;});
+      if(block.detachedId){const key=[u.primary.id,block.detachedId].sort().join('|');detachedMarriageAnchors.set(key,block.detachedId);}
+    }
+  }
+
+  const minX=Math.min(...[...positions.values()].map(p=>p.x),0);if(minX<marginX){const d=marginX-minX;for(const pos of positions.values()){pos.x+=d;pos.cx+=d;}for(const u of units){u.x+=d;u.cx+=d;u.layoutLeft+=d;}}
   const maxX=Math.max(...[...positions.values()].map(p=>p.x+nodeW),600),maxY=Math.max(...[...positions.values()].map(p=>p.y+nodeH),400);
   const width=maxX+marginX,height=maxY+marginY+(maxSpouses>1?14+(maxSpouses-1)*multiLaneStep:0);const paths=[];
 
@@ -390,16 +423,18 @@ function buildLayout(people) {
       const left=edge.a.cx<edge.b.cx?edge.a:edge.b,right=edge.a.cx<edge.b.cx?edge.b:edge.a;
       const spouse=byId.get(edge.sid),div=(edge.p.divorced_spouse_ids||[]).includes(edge.sid)||(spouse?.divorced_spouse_ids||[]).includes(edge.p.id),cross=crossBranchMarriage(edge.p,spouse);
       const cls=`relation-line spouse${div?' divorced':''}${cross?' cross-branch':''}`;
+      const detachedId=detachedMarriageAnchors.get(edge.key),detachedPos=detachedId?positions.get(detachedId):null;
       if(!multiple){
         const y=Math.min(left.y,right.y)+spouseAnchorOffset;
-        marriageAnchors.set(edge.key,{x:avg([left.cx,right.cx]),y});
+        marriageAnchors.set(edge.key,{x:detachedPos?.cx??avg([left.cx,right.cx]),y});
         paths.push(`<path class="${cls}" d="M ${round(left.x+nodeW)} ${round(y)} H ${round(right.x)}"/>`);
       }else{
-        // Multiple marriages use separate lanes below the cards. This prevents a
-        // connector to Vợ 2/Vợ 3 from being drawn through the Vợ cả card.
+        // Multiple marriages use separate lanes below the cards. For a detached
+        // previous spouse, descendants branch from that spouse's center rather
+        // than the midpoint of a very long marriage connector.
         const laneY=Math.max(left.bottom,right.bottom)+14+index*multiLaneStep;
-        marriageAnchors.set(edge.key,{x:avg([left.cx,right.cx]),y:laneY});
-        paths.push(`<path class="${cls} spouse-multi" d="M ${round(left.cx)} ${round(left.bottom-2)} V ${round(laneY)} H ${round(right.cx)} V ${round(right.bottom-2)}"/>`);
+        marriageAnchors.set(edge.key,{x:detachedPos?.cx??avg([left.cx,right.cx]),y:laneY});
+        paths.push(`<path class="${cls} spouse-multi${detachedPos?' spouse-detached':''}" d="M ${round(left.cx)} ${round(left.bottom-2)} V ${round(laneY)} H ${round(right.cx)} V ${round(right.bottom-2)}"/>`);
       }
     });
   }
@@ -420,6 +455,7 @@ function buildLayout(people) {
   for(const child of people){const childPos=positions.get(child.id);if(!childPos)continue;for(const stepId of child.step_parent_ids||[]){const stepPos=positions.get(stepId);if(!stepPos)continue;const bioIds=[child.father_id,child.mother_id].filter(Boolean);const bioId=bioIds.find(id=>(byId.get(stepId)?.spouse_ids||[]).includes(id));const marriageKey=bioId?[stepId,bioId].sort().join('|'):'';const anchor=marriageKey?marriageAnchors.get(marriageKey):null;const sx=anchor?.x??stepPos.cx,sy=anchor?.y??stepPos.bottom;const tx=childPos.cx+10,ty=childPos.top-2,mid=sy+(ty-sy)*.58;paths.push(`<path class="relation-line stepchild" d="M ${round(sx)} ${round(sy)} V ${round(mid)} H ${round(tx)} V ${round(ty)}"/>`);}}
   return {width,height,paths,nodes:[...positions.values()],familyAnchors:marriageAnchors};
 }
+
 
 function renderPersonNode(pos){
   const p=pos.person; const gender=['male','female','other'].includes(p.gender)?p.gender:'other'; const img=p.image_url||`/assets/avatar-${gender==='other'?'placeholder':gender}.svg`;
