@@ -58,7 +58,7 @@ function bindUI() {
   },{passive:false});
 
   $('#closeDetail').addEventListener('click',closeDetail); $('#panelBackdrop').addEventListener('click',closeDetail);
-  $('#commentFab').addEventListener('click',openComments); $('#openCommentsBtn').addEventListener('click',openComments); $('#closeComments').addEventListener('click',closeComments);
+  $('#commentFab').addEventListener('click',openComments); $('#openCommentsBtn')?.addEventListener('click',openComments); $('#closeComments').addEventListener('click',closeComments);
   $('#commentForm').addEventListener('submit', submitComment);
   $('#statsRow').addEventListener('click',e=>{const b=e.target.closest('[data-stat-key]');if(b)openStatsList(b.dataset.statKey,b.dataset.statLabel||'Thành viên');});
   $('#closeStats').addEventListener('click',closeStatsList); $('#statsBackdrop').addEventListener('click',closeStatsList);
@@ -243,6 +243,7 @@ function visiblePeopleForCollapse(people,collapsedFamilies){
   const byId=new Map(people.map(p=>[p.id,p]));
   const directByFamily=new Map();
   const childrenByParent=new Map();
+  const stepChildrenByParent=new Map();
   for(const child of people){
     const key=familyKeyFromChild(child);
     if(key){if(!directByFamily.has(key))directByFamily.set(key,[]);directByFamily.get(key).push(child.id);}
@@ -250,24 +251,37 @@ function visiblePeopleForCollapse(people,collapsedFamilies){
       if(!childrenByParent.has(pid))childrenByParent.set(pid,[]);
       childrenByParent.get(pid).push(child.id);
     }
-  }
-  const bloodHidden=new Set(); const queue=[];
-  for(const key of collapsedFamilies){for(const id of directByFamily.get(key)||[]){if(!bloodHidden.has(id)){bloodHidden.add(id);queue.push(id);}}}
-  while(queue.length){
-    const id=queue.shift();
-    for(const cid of childrenByParent.get(id)||[]){if(!bloodHidden.has(cid)){bloodHidden.add(cid);queue.push(cid);}}
-  }
-  const hidden=new Set(bloodHidden);
-  for(const id of bloodHidden){
-    const p=byId.get(id); if(!p)continue;
-    for(const sid of p.spouse_ids||[]){
-      if(bloodHidden.has(sid))continue;
-      const sp=byId.get(sid); if(!sp)continue;
-      const hasVisibleLineage=[sp.father_id,sp.mother_id].filter(Boolean).some(pid=>byId.has(pid)&&!bloodHidden.has(pid));
-      const spouseChildren=childrenByParent.get(sid)||[];
-      const hasVisibleChild=spouseChildren.some(cid=>!bloodHidden.has(cid));
-      if(!hasVisibleLineage&&!hasVisibleChild)hidden.add(sid);
+    for(const pid of child.step_parent_ids||[]){
+      if(!pid)continue;
+      if(!stepChildrenByParent.has(pid))stepChildrenByParent.set(pid,[]);
+      stepChildrenByParent.get(pid).push(child.id);
     }
+  }
+
+  // A collapsed family hides the complete descendant branch, not only blood children.
+  // A direct descendant is a "downline" member: hide their descendants, stepchildren and
+  // spouse(s). A spouse is an attached "partner": hide the spouse and their own children
+  // (including a child from another relationship), but do not walk upward to the spouse's
+  // parents or sideways through that spouse's other marriages. This keeps collapse local
+  // while ensuring in-laws and stepchildren cannot remain floating on the canvas.
+  const hidden=new Set();
+  const queued=new Set();
+  const queue=[];
+  const enqueue=(id,role)=>{
+    if(!id||!byId.has(id))return;
+    const token=`${role}:${id}`;
+    if(queued.has(token))return;
+    queued.add(token);queue.push({id,role});
+  };
+  for(const key of collapsedFamilies)for(const id of directByFamily.get(key)||[])enqueue(id,'downline');
+
+  while(queue.length){
+    const {id,role}=queue.shift();
+    const person=byId.get(id);if(!person)continue;
+    hidden.add(id);
+    for(const cid of childrenByParent.get(id)||[])enqueue(cid,'downline');
+    for(const cid of stepChildrenByParent.get(id)||[])enqueue(cid,'downline');
+    if(role==='downline')for(const sid of person.spouse_ids||[])enqueue(sid,'partner');
   }
   return people.filter(p=>!hidden.has(p.id));
 }
@@ -286,6 +300,8 @@ function buildFamilyToggles(allPeople,nodes,collapsedFamilies,familyAnchors=null
   for(const fam of families.values()){
     const parentPos=fam.parentIds.map(id=>positions.get(id)).filter(Boolean);
     if(!parentPos.length)continue;
+    const hasVisibleDirectChild=fam.children.some(child=>positions.has(child.id));
+    if(!collapsedFamilies.has(fam.key)&&!hasVisibleDirectChild)continue;
     const anchor=familyAnchors?.get?.(fam.key)||null;
     const x=anchor?.x??avg(parentPos.map(p=>p.cx));
     const sourceY=anchor?.y??(parentPos.length>=2?Math.min(...parentPos.map(p=>p.y))+124:Math.max(...parentPos.map(p=>p.bottom))+2);

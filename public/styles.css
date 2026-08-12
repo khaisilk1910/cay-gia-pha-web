@@ -347,3 +347,70 @@ body.welcome-popup-open{overflow:hidden}
 .contribution-admin-card{width:100%}.contribution-admin-head{align-items:flex-start}.contribution-admin-summary{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px;margin:2px 0 14px}.contribution-admin-summary>div{padding:12px 14px;border:1px solid #e3dccf;border-radius:14px;background:#faf8f3;display:flex;align-items:center;justify-content:space-between;gap:12px}.contribution-admin-summary span{font-size:9px;text-transform:uppercase;letter-spacing:.08em;color:#8c8274}.contribution-admin-summary strong{font-size:16px;color:#304844}.contribution-admin-tools{display:grid;grid-template-columns:minmax(250px,1fr) 180px 220px;gap:9px;margin-bottom:11px}.contribution-admin-search{display:flex;align-items:center;gap:7px}.contribution-admin-search>span{font-size:18px;color:#847b6d}.contribution-admin-search .input{flex:1}.contribution-table tbody tr:nth-child(odd) td{background:#fffaf2}.contribution-table tbody tr:nth-child(even) td{background:#f2f7f5}.contribution-donor-name{font-family:var(--serif);color:#294744}.contribution-money{color:#896229;white-space:nowrap}.contribution-copy-cell,.contribution-note-cell{white-space:pre-line;min-width:170px;max-width:320px}.contribution-modal-card .modal-head p{margin:3px 0 0;color:#888076;font-size:10px}.settings-merit-preview{grid-column:1/-1;display:flex;align-items:center;gap:14px;padding:18px;border:1px solid #e3dbc9;border-radius:18px;background:linear-gradient(135deg,#fffaf0,#f3f7f4)}.settings-merit-preview>span{width:44px;height:44px;flex:0 0 auto;border-radius:50%;display:grid;place-items:center;background:#253f43;color:#fff;font-size:17px}.settings-merit-preview strong{font-family:var(--serif);font-size:17px}.settings-merit-preview p{margin:4px 0 0;color:#817a70;font-size:11px;line-height:1.55}
 @media(max-width:900px){.contribution-filter-bar,.contribution-admin-tools{grid-template-columns:1fr 1fr}.contribution-search,.contribution-admin-search{grid-column:1/-1}.contribution-summary-grid{gap:8px}.contribution-section{padding:20px}.contribution-section-head{align-items:flex-start}.contribution-admin-summary{grid-template-columns:1fr 1fr}.contribution-admin-summary>div:last-child{grid-column:1/-1}}
 @media(max-width:700px){.contributions-main{padding:0 10px 56px}.contributions-hero{padding:38px 8px 26px}.contributions-hero h1{font-size:42px}.contribution-summary-grid{grid-template-columns:1fr 1fr}.contribution-summary-card{min-height:78px;padding:12px}.contribution-summary-card.accent{grid-column:1/-1}.contribution-summary-card strong{font-size:21px}.contribution-section{padding:15px;border-radius:22px}.contribution-section-head{flex-direction:column;gap:10px;margin-bottom:14px}.contribution-filter-bar,.contribution-admin-tools{grid-template-columns:1fr}.contribution-search,.contribution-admin-search{grid-column:auto}.contribution-table-shell{overflow:visible;border:0;background:transparent}.contribution-public-table{display:block;min-width:0}.contribution-public-table thead{display:none}.contribution-public-table tbody{display:grid;gap:10px}.contribution-public-table tr{display:block;border:1px solid #e4ddcf;border-radius:17px;overflow:hidden;box-shadow:0 8px 22px rgba(58,49,36,.055)}.contribution-public-table td{display:grid;grid-template-columns:118px minmax(0,1fr);gap:10px;padding:10px 12px;border-bottom:1px dashed rgba(210,201,185,.72)!important;font-size:11px;white-space:normal!important;min-width:0!important;max-width:none!important}.contribution-public-table td:last-child{border-bottom:0!important}.contribution-public-table td:before{content:attr(data-label);font-size:8px;letter-spacing:.08em;text-transform:uppercase;color:#8b8171;font-weight:800}.contribution-public-table .contribution-rank{text-align:left}.contribution-public-table .contribution-donor{font-size:14px}.top-contribution-table .contribution-row td,.contribution-list-table tbody tr:nth-child(odd) td,.contribution-list-table tbody tr:nth-child(even) td{background:transparent}.top-contribution-table tr.rank-1{background:#fff5d7}.top-contribution-table tr.rank-2{background:#f3f6f5}.top-contribution-table tr.rank-3{background:#f8eee7}.contribution-list-table tr:nth-child(odd){background:#fffaf2}.contribution-list-table tr:nth-child(even){background:#f2f7f5}.contribution-pagination{align-items:flex-start}.contribution-pagination .people-page-controls{width:100%;overflow-x:auto;padding-bottom:3px}.contribution-admin-summary{grid-template-columns:1fr}.contribution-admin-summary>div:last-child{grid-column:auto}.admin-page .admin-nav{overflow-x:auto;justify-content:flex-start;scrollbar-width:none}.admin-page .admin-nav::-webkit-scrollbar{display:none}.admin-page .nav-btn{min-width:58px;flex:0 0 58px}}
+
+
+/* v1.0.31 · complete branch collapse + unified public spacing + responsive overlays */
+/* Keep the top rhythm of every public content page aligned with the tree page. */
+.hero,.gallery-hero,.contact-hero,.contributions-hero{padding-top:28px}
+
+/* Statistics dialog must stay inside the *visible* viewport, including mobile browsers
+   with dynamic address/navigation bars. */
+.stats-panel{max-height:calc(100dvh - 24px)}
+.stats-person-list{min-height:0}
+
+/* The floating comment button is the single entry point; the panel itself is viewport-safe. */
+.comment-panel{max-height:calc(100dvh - 104px)}
+
+@media(max-width:700px){
+  .hero,.gallery-hero,.contact-hero,.contributions-hero{padding-top:18px}
+  .stats-panel{
+    left:max(6px,env(safe-area-inset-left));right:max(6px,env(safe-area-inset-right));
+    top:max(6px,env(safe-area-inset-top));bottom:max(6px,env(safe-area-inset-bottom));
+    width:auto;height:auto;max-width:none;max-height:none;
+    transform:translateY(12px) scale(.985);border-radius:18px;
+  }
+  .stats-panel.open{transform:none}
+  .stats-panel-head{flex:0 0 auto;padding:13px 12px 10px;gap:10px}
+  .stats-panel-head h2{font-size:20px;margin:3px 0}
+  .stats-panel-head p{font-size:9px;line-height:1.35}
+  .stats-list-tools{flex:0 0 auto;padding:8px 8px 0}
+  .stats-search{height:38px}
+  .stats-person-list{flex:1 1 auto;overflow:auto;padding:7px 8px;overscroll-behavior:contain}
+  .stats-person{grid-template-columns:20px 38px minmax(0,1fr) 13px;gap:7px;padding:7px 8px;border-radius:12px}
+  .stats-person img{width:36px;height:36px}
+  .stats-person-copy strong{font-size:12px}
+  .stats-person-copy small{font-size:8px;white-space:normal;line-height:1.35}
+  .stats-pagination{flex:0 0 auto;padding:8px;padding-bottom:max(8px,env(safe-area-inset-bottom))}
+  .stats-pagination .people-page-info{font-size:8px}
+  .stats-pagination .people-page-controls{gap:3px;overflow-x:auto;justify-content:flex-start;padding-bottom:2px;scrollbar-width:none}
+  .stats-pagination .people-page-controls::-webkit-scrollbar{display:none}
+  .stats-pagination .page-btn{min-height:34px;padding:6px 8px;white-space:nowrap}
+  .stats-pagination .page-jump{white-space:nowrap}
+  .stats-pagination .page-jump input{width:44px}
+
+  .comment-panel{
+    left:max(6px,env(safe-area-inset-left));right:max(6px,env(safe-area-inset-right));
+    top:max(6px,env(safe-area-inset-top));bottom:max(66px,calc(env(safe-area-inset-bottom) + 58px));
+    width:auto;height:auto;max-width:none;max-height:none;border-radius:18px;
+  }
+  .comment-header{flex:0 0 auto;padding:13px 13px 10px}
+  .comment-header h2{font-size:18px;margin-top:3px}
+  .comment-list{min-height:0;flex:1 1 auto;padding:9px 10px;overscroll-behavior:contain}
+  .comment-form{flex:0 0 auto;padding:9px 10px max(9px,env(safe-area-inset-bottom))}
+  .comment-form label{margin-bottom:6px}
+  .comment-form input,.comment-form textarea{padding:8px 9px;font-size:11px}
+  .comment-form textarea{max-height:84px}
+  .comment-form-bottom{align-items:flex-end}
+  .comment-form-bottom small{font-size:7px;line-height:1.3;max-width:52%}
+  .comment-form-bottom .primary-btn{flex:0 0 auto}
+  .comment-fab{right:max(10px,env(safe-area-inset-right));bottom:max(10px,env(safe-area-inset-bottom));height:46px;padding:0 13px}
+}
+
+@media(max-width:380px),(max-height:620px){
+  .stats-panel-head .eyebrow,.comment-header .eyebrow{display:none}
+  .stats-panel-head h2,.comment-header h2{margin-top:0}
+  .comment-header{padding-block:10px 8px}
+  .comment-form textarea{height:58px;min-height:58px}
+  .comment-form-bottom small{display:none}
+  .comment-form-bottom{justify-content:flex-end}
+}

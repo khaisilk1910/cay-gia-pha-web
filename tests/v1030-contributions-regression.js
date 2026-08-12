@@ -16,7 +16,7 @@ const css=read('public/styles.css');
 const server=read('server.js');
 const dbCode=read('lib/db.js');
 
-assert.equal(pkg.version,'1.0.30','package.json phải ở v1.0.30');
+assert.ok(/^1\.0\.(?:3[0-9]|[4-9][0-9]|\d{3,})$/.test(pkg.version),`package.json phải ở v1.0.30 trở lên, hiện tại ${pkg.version}`);
 assert.ok(fs.existsSync(path.join(root,'public','contributions.html')),'Thiếu trang public Phương Danh Công Đức');
 assert.ok(fs.existsSync(path.join(root,'public','contributions.js')),'Thiếu JS trang Phương Danh Công Đức');
 
