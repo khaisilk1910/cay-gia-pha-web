@@ -12,7 +12,7 @@ const publicUi=read('public/public-ui.js');
 const admin=read('public/admin.js');
 const css=read('public/styles.css');
 const pkg=JSON.parse(read('package.json'));
-assert.equal(pkg.version,'1.0.29');
+assert.ok(/^1\.0\.(?:29|[3-9]\d|\d{3,})$/.test(pkg.version),`expected version >= 1.0.29, got ${pkg.version}`);
 
 // Welcome popup: no confirmation button, close by backdrop/X/Escape, and lock background scroll.
 assert.match(publicUi,/welcome-popup-backdrop[^']*data-welcome-close/);

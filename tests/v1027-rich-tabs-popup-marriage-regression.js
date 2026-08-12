@@ -9,7 +9,7 @@ const root=path.join(__dirname,'..');
 const read=f=>fs.readFileSync(path.join(root,f),'utf8');
 const admin=read('public/admin.js'), app=read('public/app.js'), print=read('public/print.js'), publicUi=read('public/public-ui.js'), css=read('public/styles.css'), server=read('server.js'), dbSrc=read('lib/db.js');
 const pkg=JSON.parse(read('package.json'));
-assert.ok(['1.0.27','1.0.28','1.0.29'].includes(pkg.version));
+assert.ok(/^1\.0\.(?:2[7-9]|[3-9]\d|\d{3,})$/.test(pkg.version),`expected version >= 1.0.27, got ${pkg.version}`);
 
 // Settings are grouped by feature instead of one very long form.
 for(const tab of ['tree','gallery','fund','contact','author','popup','brand','backup']){

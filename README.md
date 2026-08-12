@@ -1,6 +1,17 @@
-# Cây Gia Phả Web v1.0.29
+# Cây Gia Phả Web v1.0.30
 
-Bản v1.0.29 tập trung vào **ổn định vị trí nội dung quản trị, tối giản khối QR ủng hộ và tách Gallery khỏi gói backup để dữ liệu ảnh lớn dễ quản lý hơn**. Dữ liệu v1.0.28 được nâng cấp trực tiếp, không cần tạo lại database.
+Bản v1.0.30 bổ sung trang **Phương Danh Công Đức** để công khai, tra cứu và quản lý các khoản đóng góp cho quỹ dòng họ. Dữ liệu v1.0.29 được nâng cấp trực tiếp khi khởi động, không cần tạo lại database.
+
+## Cập nhật v1.0.30
+
+- Thêm trang công khai **Phương Danh Công Đức** tại `/contributions.html`, hiển thị STT, Phương danh, Nội dung công đức, Giá trị, Ngày công đức và Ghi chú.
+- Danh sách có phân trang, tìm theo Phương danh, lọc theo năm và sắp xếp theo ngày, giá trị hoặc tên. Các dòng dùng nền xen kẽ để dễ theo dõi trên desktop; trên điện thoại mỗi bản ghi tự chuyển thành card có nhãn trường rõ ràng.
+- Phía trên danh sách đầy đủ có **Bảng vinh danh Top**. Các lần công đức có cùng Phương danh được cộng dồn, xếp từ tổng giá trị cao xuống thấp và nhấn mạnh hạng 1/2/3.
+- Trong **Cài đặt → Công đức**, admin chọn số lượng hiển thị Top là **5, 10, 15 hoặc 20**; mặc định Top 10.
+- Admin có mục **Phương danh** riêng để thêm, sửa, xóa, tìm, lọc theo năm, sắp xếp và phân trang. `admin`/`editor` được chỉnh sửa; `viewer` được xem danh sách.
+- Dữ liệu công đức được lưu trong bảng `contributions`, có log thao tác, thống kê số lượt/tổng giá trị và được đưa vào backup hệ thống. Quy tắc từ v1.0.29 vẫn giữ nguyên: `data/uploads/gallery/` không nằm trong `.gpbak` và phải sao lưu riêng.
+- Restore tương thích cả backup JSON legacy v3 tạo trước v1.0.30, khi chưa có bảng Phương Danh Công Đức.
+- Bổ sung regression test v1.0.30 cho database, CRUD, tổng hợp Top, cấu hình 5/10/15/20, giao diện responsive, API public/admin và tương thích backup cũ.
 
 ## Cập nhật v1.0.29
 
@@ -183,4 +194,4 @@ Khi nâng cấp từ v1.0.3 bằng hotfix, bảng `branches` được tạo tự
 
 ## Docker / Container
 
-Bản Docker-ready tương ứng được đóng gói riêng trong `cay-gia-pha-web-v1.0.29-docker.zip`, kèm `Dockerfile`, Compose và Portainer Stack.
+Bản Docker-ready tương ứng được đóng gói riêng trong `cay-gia-pha-web-v1.0.30-docker.zip`, kèm `Dockerfile`, Compose và Portainer Stack.

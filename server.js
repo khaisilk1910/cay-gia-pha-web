@@ -182,6 +182,25 @@ async function handleApi(req, res, url) {
   if (method === 'GET' && pathname === '/api/public/contact') {
     return json(res, 200, { settings: publicSettings(store.settings()), contacts: store.listContacts({ publicOnly:true }) });
   }
+  if (method === 'GET' && pathname === '/api/public/contributions') {
+    const settings=store.settings(); const all=store.listContributions();
+    const q=sanitizeText(url.searchParams.get('q')||'',160).toLocaleLowerCase('vi');
+    const year=String(url.searchParams.get('year')||'').trim();
+    const sort=String(url.searchParams.get('sort')||'date_desc');
+    const pageSize=Math.max(5,Math.min(100,Math.trunc(Number(url.searchParams.get('page_size'))||20)));
+    let rows=all.filter((r)=>(!q||String(r.donor_name||'').toLocaleLowerCase('vi').includes(q))&&(!/^\d{4}$/.test(year)||String(r.contribution_date||'').startsWith(`${year}-`)));
+    const cmpText=(a,b)=>String(a||'').localeCompare(String(b||''),'vi',{sensitivity:'base'});
+    if(sort==='amount_desc')rows.sort((a,b)=>Number(b.amount||0)-Number(a.amount||0)||String(b.contribution_date||'').localeCompare(String(a.contribution_date||''))||cmpText(a.donor_name,b.donor_name));
+    else if(sort==='amount_asc')rows.sort((a,b)=>Number(a.amount||0)-Number(b.amount||0)||String(b.contribution_date||'').localeCompare(String(a.contribution_date||''))||cmpText(a.donor_name,b.donor_name));
+    else if(sort==='date_asc')rows.sort((a,b)=>String(a.contribution_date||'').localeCompare(String(b.contribution_date||''))||cmpText(a.donor_name,b.donor_name));
+    else if(sort==='year_desc')rows.sort((a,b)=>String(b.contribution_date||'').slice(0,4).localeCompare(String(a.contribution_date||'').slice(0,4))||String(b.contribution_date||'').localeCompare(String(a.contribution_date||''))||cmpText(a.donor_name,b.donor_name));
+    else if(sort==='year_asc')rows.sort((a,b)=>String(a.contribution_date||'').slice(0,4).localeCompare(String(b.contribution_date||'').slice(0,4))||String(b.contribution_date||'').localeCompare(String(a.contribution_date||''))||cmpText(a.donor_name,b.donor_name));
+    else if(sort==='name_asc')rows.sort((a,b)=>cmpText(a.donor_name,b.donor_name)||String(b.contribution_date||'').localeCompare(String(a.contribution_date||'')));
+    else rows.sort((a,b)=>String(b.contribution_date||'').localeCompare(String(a.contribution_date||''))||Number(b.amount||0)-Number(a.amount||0)||cmpText(a.donor_name,b.donor_name));
+    const total=rows.length,totalPages=Math.max(1,Math.ceil(total/pageSize)),page=Math.min(totalPages,Math.max(1,Math.trunc(Number(url.searchParams.get('page'))||1))),start=(page-1)*pageSize;
+    const topCount=['5','10','15','20'].includes(String(settings.contribution_top_count||''))?Number(settings.contribution_top_count):10;
+    return json(res,200,{settings:publicSettings(settings),contributions:rows.slice(start,start+pageSize),top:store.topContributors(topCount),years:store.contributionYears(),summary:store.contributionSummary(all),pagination:{page,page_size:pageSize,total,total_pages:totalPages}});
+  }
 
   if (method === 'GET' && pathname === '/api/public/comments') {
     return json(res, 200, { comments: store.listComments(false, 200) });
@@ -265,6 +284,26 @@ async function handleApi(req, res, url) {
       if (!hasRole(actor, ['admin','editor'])) return forbidden(res);
       const ok = store.deleteBranch(branchMatch[1], actor.id);
       return ok ? json(res, 200, { ok: true }) : json(res, 404, { error: 'Không tìm thấy Chi gia phả.' });
+    }
+
+    if (method === 'GET' && pathname === '/api/admin/contributions') {
+      if (!hasRole(actor,['admin','editor','viewer'])) return forbidden(res);
+      return json(res,200,{contributions:store.listContributions(),years:store.contributionYears(),summary:store.contributionSummary()});
+    }
+    if (method === 'POST' && pathname === '/api/admin/contributions') {
+      if (!hasRole(actor,['admin','editor'])) return forbidden(res);
+      const body=await readJson(req,256*1024);
+      try{return json(res,201,{contribution:store.createContribution(body,actor.id)});}catch(e){return json(res,400,{error:friendlyDbError(e)});}
+    }
+    const contributionMatch=pathname.match(/^\/api\/admin\/contributions\/([^/]+)$/);
+    if (contributionMatch && method === 'PUT') {
+      if (!hasRole(actor,['admin','editor'])) return forbidden(res);
+      const body=await readJson(req,256*1024);
+      try{const contribution=store.updateContribution(contributionMatch[1],body,actor.id);return contribution?json(res,200,{contribution}):json(res,404,{error:'Không tìm thấy phương danh công đức.'});}catch(e){return json(res,400,{error:friendlyDbError(e)});}
+    }
+    if (contributionMatch && method === 'DELETE') {
+      if (!hasRole(actor,['admin','editor'])) return forbidden(res);
+      const deleted=store.deleteContribution(contributionMatch[1],actor.id);return deleted?json(res,200,{ok:true}):json(res,404,{error:'Không tìm thấy phương danh công đức.'});
     }
 
     if (method === 'GET' && pathname === '/api/admin/gallery') {
@@ -681,7 +720,7 @@ function collectRichImagePaths(value){const out=new Set();for(const item of pars
 function collectRichImagePathsFromSettings(settings){const out=new Set();for(const key of RICH_SETTING_KEYS)for(const rel of collectRichImagePaths(settings?.[key]))out.add(rel);return out;}
 function materializeRichImages(value,createdFiles){const items=parseRichArray(value),out=[];for(const item of items.slice(0,800)){if(!item||typeof item!=='object')continue;if(item.type==='image'){let rel=normalizeUploadPath(item.image_path);if(item.image_data){rel=writeImageData(item.image_data,UPLOAD_LAYOUT.richtext);createdFiles.push(rel);}if(!rel||!rel.startsWith(`${UPLOAD_LAYOUT.richtext}/`))continue;out.push({type:'image',image_path:rel,alt:String(item.alt||'').slice(0,240),width:[25,33,50,66,75,100].includes(Number(item.width))?Number(item.width):100,align:['left','center','right','justify'].includes(String(item.align||''))?String(item.align):'center'});continue;}out.push(item);}return JSON.stringify(out);}
 function publicRichContent(value){const out=[];for(const item of parseRichArray(value).slice(0,800)){if(item?.type==='image'){const rel=normalizeUploadPath(item.image_path);if(!rel||!rel.startsWith(`${UPLOAD_LAYOUT.richtext}/`))continue;const copy={...item,image_url:uploadUrl(rel)||''};delete copy.image_path;out.push(copy);}else out.push(item);}return JSON.stringify(out);}
-function publicSettings(s){ const templePaths=[...new Set([...settingPathArray(s.contact_temple_image_paths), ...(s.contact_temple_image_path?[s.contact_temple_image_path]:[])])].map(normalizeUploadPath).filter((p)=>p&&p.startsWith(`${UPLOAD_LAYOUT.temple}/`)).slice(0,10); const templeUrls=templePaths.map(uploadUrl).filter(Boolean); return { tree_title:s.tree_title, tree_subtitle:s.tree_subtitle, tree_subtitle_content:publicRichContent(s.tree_subtitle_content||'[]'), clan_name:s.clan_name, tree_footer_content:publicRichContent(s.tree_footer_content||'[]'), gallery_intro_content:publicRichContent(s.gallery_intro_content||'[]'), gallery_footer_content:publicRichContent(s.gallery_footer_content||'[]'), public_comments_enabled:s.public_comments_enabled, accent_theme:s.accent_theme, tree_font:s.tree_font||'system', tree_title_font_size:s.tree_title_font_size||'28', clan_name_font_size:s.clan_name_font_size||'66', logo_url:s.site_logo_path?(uploadUrl(s.site_logo_path)||'/assets/logo.png'):'/assets/logo.png', fund_support_enabled:s.fund_support_enabled||'0', fund_support_content:publicRichContent(s.fund_support_content||'[]'), fund_support_qr_url:s.fund_support_qr_path?(uploadUrl(s.fund_support_qr_path)||''):'', footer_author_text:s.footer_author_text||'', footer_author_content:publicRichContent(s.footer_author_content||'[]'), footer_author_font:s.footer_author_font||'system', contact_intro_content:publicRichContent(s.contact_intro_content||'[]'), contact_footer_content:publicRichContent(s.contact_footer_content||'[]'), contact_map_url:s.contact_map_url||'', contact_map_address_content:publicRichContent(s.contact_map_address_content||'[]'), contact_temple_image_urls:templeUrls, contact_temple_image_url:templeUrls[0]||'', welcome_popup_enabled:s.welcome_popup_enabled||'0', welcome_popup_content:publicRichContent(s.welcome_popup_content||'[]') }; }
+function publicSettings(s){ const templePaths=[...new Set([...settingPathArray(s.contact_temple_image_paths), ...(s.contact_temple_image_path?[s.contact_temple_image_path]:[])])].map(normalizeUploadPath).filter((p)=>p&&p.startsWith(`${UPLOAD_LAYOUT.temple}/`)).slice(0,10); const templeUrls=templePaths.map(uploadUrl).filter(Boolean); return { tree_title:s.tree_title, tree_subtitle:s.tree_subtitle, tree_subtitle_content:publicRichContent(s.tree_subtitle_content||'[]'), clan_name:s.clan_name, tree_footer_content:publicRichContent(s.tree_footer_content||'[]'), gallery_intro_content:publicRichContent(s.gallery_intro_content||'[]'), gallery_footer_content:publicRichContent(s.gallery_footer_content||'[]'), public_comments_enabled:s.public_comments_enabled, accent_theme:s.accent_theme, tree_font:s.tree_font||'system', tree_title_font_size:s.tree_title_font_size||'28', clan_name_font_size:s.clan_name_font_size||'66', logo_url:s.site_logo_path?(uploadUrl(s.site_logo_path)||'/assets/logo.png'):'/assets/logo.png', fund_support_enabled:s.fund_support_enabled||'0', fund_support_content:publicRichContent(s.fund_support_content||'[]'), fund_support_qr_url:s.fund_support_qr_path?(uploadUrl(s.fund_support_qr_path)||''):'', footer_author_text:s.footer_author_text||'', footer_author_content:publicRichContent(s.footer_author_content||'[]'), footer_author_font:s.footer_author_font||'system', contact_intro_content:publicRichContent(s.contact_intro_content||'[]'), contact_footer_content:publicRichContent(s.contact_footer_content||'[]'), contact_map_url:s.contact_map_url||'', contact_map_address_content:publicRichContent(s.contact_map_address_content||'[]'), contact_temple_image_urls:templeUrls, contact_temple_image_url:templeUrls[0]||'', welcome_popup_enabled:s.welcome_popup_enabled||'0', welcome_popup_content:publicRichContent(s.welcome_popup_content||'[]'), contribution_top_count:['5','10','15','20'].includes(String(s.contribution_top_count||''))?String(s.contribution_top_count):'10' }; }
 function friendlyDbError(e){ const m=String(e?.message||e); if(m.includes('UNIQUE constraint failed: users.username'))return 'Username đã tồn tại.'; return m.slice(0,500); }
 function dateStamp(){ return new Date().toISOString().slice(0,10); }
 function strongHumanPassword(){ return `GiaPha-${randomToken(9)}-7a!`; }

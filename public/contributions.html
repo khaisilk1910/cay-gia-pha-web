@@ -1,0 +1,94 @@
+<!doctype html>
+<html lang="vi">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+  <meta name="description" content="Phương Danh Công Đức - trân trọng ghi nhận cá nhân, gia đình và tập thể đóng góp cho quỹ dòng họ.">
+  <title>Phương Danh Công Đức · Cây Gia Phả</title>
+  <link rel="icon" href="/assets/logo.png">
+  <link rel="stylesheet" href="/styles.css?v=1.0.30">
+</head>
+<body class="public-page contributions-page">
+  <div class="ambient ambient-a"></div><div class="ambient ambient-b"></div>
+  <header class="site-header contributions-site-header">
+    <a class="brand" href="/" aria-label="Về cây gia phả">
+      <img src="/assets/logo.png" alt="Logo gia phả" class="brand-logo" id="contributionBrandLogo">
+      <span class="brand-copy"><small class="brand-label">Gia Phả</small><strong id="contributionClanName">Gia đình</strong></span>
+    </a>
+    <nav class="header-actions" aria-label="Điều hướng">
+      <a class="gallery-header-link" href="/">Cây gia phả</a>
+      <a class="gallery-header-link" href="/gallery.html">Thư viện ảnh</a>
+      <a class="gallery-header-link active-public-link" href="/contributions.html">Công đức</a>
+      <a class="gallery-header-link" href="/contact.html">Liên hệ</a>
+      <a class="admin-link" href="/admin.html">Quản trị <span>↗</span></a>
+    </nav>
+  </header>
+
+  <main class="contributions-main">
+    <section class="contributions-hero">
+      <div class="hero-kicker"><span class="kicker-dot"></span> Tấm lòng hướng về nguồn cội</div>
+      <div class="contribution-emblem" aria-hidden="true">✦</div>
+      <h1>Phương Danh Công Đức</h1>
+      <p>Trân trọng ghi nhận những tấm lòng của cá nhân, gia đình và tập thể đã chung tay vun đắp, gìn giữ các giá trị của dòng họ.</p>
+      <div class="contribution-summary-grid" id="contributionSummary">
+        <div class="contribution-summary-card"><span>Tổng lượt công đức</span><strong>0</strong></div>
+        <div class="contribution-summary-card"><span>Phương danh</span><strong>0</strong></div>
+        <div class="contribution-summary-card accent"><span>Tổng giá trị</span><strong>0 ₫</strong></div>
+      </div>
+    </section>
+
+    <section class="contribution-section contribution-top-section" aria-labelledby="contributionTopTitle">
+      <div class="contribution-section-head">
+        <div><span class="eyebrow">Bảng vinh danh</span><h2 id="contributionTopTitle">Những tấm lòng nổi bật</h2><p>Tổng hợp theo Phương danh và xếp hạng theo tổng giá trị công đức.</p></div>
+        <span class="contribution-top-badge" id="contributionTopBadge">Top 10</span>
+      </div>
+      <div class="contribution-table-shell top-table-shell">
+        <table class="contribution-public-table top-contribution-table">
+          <thead><tr><th>STT</th><th>Phương danh</th><th>Nội dung công đức</th><th>Giá trị</th><th>Ngày công đức</th><th>Ghi chú</th></tr></thead>
+          <tbody id="contributionTopBody"></tbody>
+        </table>
+      </div>
+      <div class="contribution-empty hidden" id="contributionTopEmpty"><span>✦</span><strong>Chưa có phương danh công đức</strong><p>Danh sách vinh danh sẽ xuất hiện khi có dữ liệu được ghi nhận.</p></div>
+    </section>
+
+    <section class="contribution-section contribution-list-section" aria-labelledby="contributionListTitle">
+      <div class="contribution-section-head list-head">
+        <div><span class="eyebrow">Danh sách đầy đủ</span><h2 id="contributionListTitle">Phương danh công đức</h2><p>Tìm kiếm, lọc theo năm và sắp xếp danh sách theo ngày hoặc giá trị đóng góp.</p></div>
+      </div>
+      <div class="contribution-filter-bar">
+        <label class="contribution-search"><span>⌕</span><input id="contributionPublicSearch" type="search" autocomplete="off" placeholder="Tìm theo phương danh…"></label>
+        <label class="contribution-filter-field"><span>Năm</span><select id="contributionPublicYear"><option value="">Tất cả</option></select></label>
+        <label class="contribution-filter-field sort-field"><span>Sắp xếp</span><select id="contributionPublicSort"><option value="date_desc">Ngày mới nhất</option><option value="date_asc">Ngày cũ nhất</option><option value="year_desc">Năm mới → cũ</option><option value="year_asc">Năm cũ → mới</option><option value="amount_desc">Giá trị cao → thấp</option><option value="amount_asc">Giá trị thấp → cao</option><option value="name_asc">Phương danh A → Z</option></select></label>
+      </div>
+      <div class="contribution-result-meta" id="contributionResultMeta">Đang tải danh sách…</div>
+      <div class="contribution-table-shell">
+        <table class="contribution-public-table contribution-list-table">
+          <thead><tr><th>STT</th><th>Phương danh</th><th>Nội dung công đức</th><th>Giá trị</th><th>Ngày công đức</th><th>Ghi chú</th></tr></thead>
+          <tbody id="contributionListBody"></tbody>
+        </table>
+      </div>
+      <div class="contribution-empty hidden" id="contributionListEmpty"><span>⌕</span><strong>Không tìm thấy kết quả phù hợp</strong><p>Hãy thử đổi từ khóa, năm hoặc kiểu sắp xếp.</p></div>
+      <div class="people-pagination contribution-pagination" id="contributionPagination">
+        <div class="people-page-info" id="contributionPageInfo">0 bản ghi</div>
+        <div class="people-page-controls">
+          <button class="page-btn" type="button" id="contributionFirstPage">Đầu</button>
+          <button class="page-btn" type="button" id="contributionPrevPage">← Lùi</button>
+          <label class="page-jump">Trang <input id="contributionPageInput" type="number" min="1" value="1" inputmode="numeric"> <span id="contributionPageTotal">/ 1</span></label>
+          <button class="page-btn" type="button" id="contributionNextPage">Tiến →</button>
+          <button class="page-btn" type="button" id="contributionLastPage">Cuối</button>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <footer class="site-footer contributions-footer">
+    <div class="footer-summary"><strong id="contributionFooterClan">Gia đình</strong> · Trân trọng những tấm lòng hướng về nguồn cội.</div>
+    <section class="fund-support hidden" data-shared-fund aria-label="Ủng hộ quỹ dòng họ"><div class="fund-support-glow" aria-hidden="true"></div><div class="fund-support-qr-wrap" data-fund-qr-wrap><div class="fund-support-qr-frame"><img data-fund-qr alt="Mã QR ủng hộ quỹ dòng họ"></div><span class="fund-support-scan">Quét mã để ủng hộ</span></div><div class="fund-support-copy"><span class="fund-support-kicker">Chung tay gìn giữ nguồn cội</span><div class="fund-support-content public-rich-text" data-fund-content></div></div></section>
+    <div class="traffic-row footer-traffic" id="contributionTrafficStats" aria-live="polite"></div>
+    <div class="footer-author public-rich-text hidden" data-shared-author></div>
+  </footer>
+
+  <script src="/public-ui.js?v=1.0.30" defer></script>
+  <script src="/contributions.js?v=1.0.30" defer></script>
+</body>
+</html>

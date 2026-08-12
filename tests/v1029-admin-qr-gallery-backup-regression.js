@@ -17,7 +17,7 @@ const dbCode=read('lib/db.js');
 const server=read('server.js');
 const pkg=JSON.parse(read('package.json'));
 
-assert.equal(pkg.version,'1.0.29');
+assert.ok(/^1\.0\.(?:29|[3-9]\d|\d{3,})$/.test(pkg.version),`expected version >= 1.0.29, got ${pkg.version}`);
 assert.match(admin,/history\.scrollRestoration='manual'/,'Admin phải vô hiệu scroll restoration để các view luôn bắt đầu từ top');
 assert.match(admin,/function switchView\(name\)[\s\S]*?window\.scrollTo\(0,0\)/,'Chuyển trang Admin phải đưa nội dung về top');
 assert.match(admin,/data-settings-tab[\s\S]*?window\.scrollTo\(0,0\)/,'Chuyển tab Cài đặt phải đưa nội dung về top');
