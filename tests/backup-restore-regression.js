@@ -13,7 +13,7 @@ assert.match(serverCode,/\/api\/admin\/backup\/export/,'Phải có API xuất b�
 assert.match(serverCode,/\/api\/admin\/backup\/restore/,'Phải có API khôi phục bản sao lưu');
 assert.match(adminCode,/id="backupRestoreFile"/,'Cài đặt phải có ô chọn tệp khôi phục');
 assert.match(adminCode,/KHOI PHUC/,'Khôi phục phải có xác nhận mạnh trước khi ghi đè dữ liệu');
-assert.match(adminCode,/thay thế toàn bộ dữ liệu hiện tại/i,'Giao diện phải cảnh báo restore không phải merge');
+assert.match(adminCode,/giữ nguyên data\/uploads\/gallery hiện có/i,'Giao diện phải nêu rõ Gallery được giữ riêng khi restore');
 assert.match(css,/\.backup-box/,'Phần sao lưu/khôi phục phải có giao diện riêng');
 
 const tmp=fs.mkdtempSync(path.join(os.tmpdir(),'gia-pha-backup-'));

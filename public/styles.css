@@ -314,3 +314,24 @@ body.welcome-popup-open{overflow:hidden}
   .admin-content{padding-left:10px;padding-right:10px}.settings-tabs-wrap{top:58px;padding:6px 0 8px}.settings-tabs{gap:5px}.settings-tab-btn{min-height:32px;padding:7px 9px;border-radius:11px;font-size:9px;gap:5px}.settings-tab-btn span{font-size:10px}.settings-panel-head{margin:9px 0 13px}.settings-panel-head h3{font-size:20px}.settings-panel-head p{font-size:11px}
   .welcome-popup{padding:8px}.welcome-popup-card{width:calc(100vw - 16px);max-height:90dvh;border-radius:22px;padding:36px 14px 20px}.welcome-popup-close{top:10px;right:10px;width:38px;height:38px}.welcome-popup-ornament{margin-bottom:10px}.welcome-popup-content .public-rich-line{line-height:1.5}
 }
+
+/* v1.0.29 · stable admin top alignment, larger QR, gallery external backup */
+.admin-app{align-items:start}
+.admin-main{min-height:100vh;align-self:start}
+.admin-topbar{top:0}
+.admin-content{align-self:start}
+.admin-view.active{display:block;min-height:0}
+.settings-tab-panel.active{animation:none}
+.settings-tabs-wrap{align-self:start}
+.fund-support{width:min(1100px,100%);grid-template-columns:250px minmax(0,1fr);gap:34px}
+.fund-support-qr-frame{width:228px;height:228px;padding:12px}
+.fund-support-kicker{margin-bottom:12px}
+.fund-support-content{max-width:720px}
+.settings-fund-qr-preview{width:220px;height:220px}
+.fund-admin-grid{grid-template-columns:270px minmax(0,1fr)}
+@media(max-width:700px){
+  .fund-support{grid-template-columns:1fr;gap:18px}
+  .fund-support-qr-frame{width:190px;height:190px}
+  .settings-fund-qr-preview{width:190px;height:190px}
+  .fund-admin-grid{grid-template-columns:1fr}
+}

@@ -35,6 +35,9 @@ for(const name of ['db.js','security.js','data-backup.js'])fs.copyFileSync(path.
     fs.mkdirSync(path.join(DATA_DIR,'extra','nested'),{recursive:true});
     fs.writeFileSync(path.join(DATA_DIR,'extra','nested','ghi-chu.txt'),'noi dung tuy y trong data');
     fs.mkdirSync(path.join(DATA_DIR,'empty-dir'),{recursive:true});
+    const galleryFolder=path.join(DATA_DIR,'uploads','gallery','Gio To 2026');
+    fs.mkdirSync(galleryFolder,{recursive:true});
+    fs.writeFileSync(path.join(galleryFolder,'anh-01.jpg'),Buffer.from('gallery-before-backup'));
     const person=store.createPerson({full_name:'Nguyễn Backup Thư Mục',gender:'male',birth_date:'1988',privacy_mode:'private',image_path:`profiles/${imageName}`},admin.id);
     fs.mkdirSync(path.join(DATA_DIR,'uploads','Logo'),{recursive:true});fs.copyFileSync(path.join(DATA_DIR,'uploads','profiles',imageName),path.join(DATA_DIR,'uploads','Logo',imageName));
     store.updateSettings({tree_title:'Gia phả trước backup',site_logo_path:`Logo/${imageName}`},admin.id);
@@ -59,6 +62,7 @@ for(const name of ['db.js','security.js','data-backup.js'])fs.copyFileSync(path.
     assert.deepEqual(fs.readFileSync(path.join(stagedData,'uploads','profiles',imageName)),image,'Ảnh đại diện phải nằm nguyên trong thư mục data đã giải mã');
     assert.equal(fs.readFileSync(path.join(stagedData,'extra','nested','ghi-chu.txt'),'utf8'),'noi dung tuy y trong data','Mọi tệp bổ sung trong data phải được đóng gói');
     assert.equal(fs.statSync(path.join(stagedData,'empty-dir')).isDirectory(),true,'Thư mục rỗng trong data cũng phải được giữ');
+    assert.equal(fs.existsSync(path.join(stagedData,'uploads','gallery')),false,'Backup .gpbak mới không được chứa data/uploads/gallery');
 
     const invalidHolder=path.join(tmp,'invalid-stage');
     const invalidData=path.join(invalidHolder,'data');
@@ -78,6 +82,7 @@ for(const name of ['db.js','security.js','data-backup.js'])fs.copyFileSync(path.
 
     store.createPerson({full_name:'Dữ liệu sau backup',gender:'female',privacy_mode:'public'},admin.id);
     fs.writeFileSync(path.join(DATA_DIR,'after-backup.txt'),'phai bi xoa khi restore');
+    fs.writeFileSync(path.join(galleryFolder,'anh-sau-backup.jpg'),Buffer.from('gallery-must-be-preserved'));
     const restored=store.restoreDataDirectory(stagedData,admin.id,'current-session');
     assert.equal(restored.ok,true);
     assert.equal(restored.session_preserved,true,'Phiên admin hiện tại được giữ nếu admin có trong backup');
@@ -86,6 +91,8 @@ for(const name of ['db.js','security.js','data-backup.js'])fs.copyFileSync(path.
     assert.equal(store.listPeople({publicOnly:false}).some(p=>p.full_name==='Dữ liệu sau backup'),false,'Restore phải thay cả data, không merge');
     assert.equal(fs.existsSync(path.join(DATA_DIR,'after-backup.txt')),false,'Tệp phát sinh sau backup phải biến mất khi thay thư mục data');
     assert.equal(fs.readFileSync(path.join(DATA_DIR,'extra','nested','ghi-chu.txt'),'utf8'),'noi dung tuy y trong data');
+    assert.equal(fs.readFileSync(path.join(DATA_DIR,'uploads','gallery','Gio To 2026','anh-sau-backup.jpg'),'utf8'),'gallery-must-be-preserved','Restore phải giữ nguyên Gallery hiện tại vì Gallery không nằm trong .gpbak');
+    assert.equal(restored.gallery_preserved,true,'Kết quả restore phải báo Gallery được giữ riêng');
     assert.equal(store.getSession('current-session').user_id,admin.id);
     store.db.close();
     console.log('data-folder-backup-regression: OK');

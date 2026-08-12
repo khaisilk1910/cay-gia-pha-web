@@ -19,7 +19,9 @@ assert.match(admin,/1000 × 1000 px/,'Admin phải có hướng dẫn kích thư
 assert.match(admin,/richEditorField\('fundSupportEditor'/,'Nội dung kêu gọi phải là trình soạn nhiều dòng');
 assert.match(admin,/fundSupportBold/,'Trình soạn phải hỗ trợ chữ đậm');
 assert.match(admin,/fundSupportSize/,'Trình soạn phải hỗ trợ đổi cỡ chữ');
-assert.match(admin,/fund_support_title_font_size/,'Admin phải đổi được cỡ chữ tiêu đề QR');
+assert.doesNotMatch(admin,/id="set_fund_support_title"/,'Admin không còn ô Tiêu đề riêng cho khối QR');
+assert.doesNotMatch(admin,/id="set_fund_support_title_font_size"/,'Admin không còn cỡ chữ tiêu đề QR');
+assert.doesNotMatch(html,/fundSupportTitle/,'Trang công khai không còn hiển thị Tiêu đề riêng của khối QR');
 assert.match(app,/span\.textContent=token\.text/,'Nội dung định dạng công khai phải dựng bằng textContent an toàn');
 assert.match(app,/fund_support_qr_url/,'Trang công khai phải nhận URL ảnh QR từ cài đặt');
 assert.match(css,/\.fund-support:hover/,'Khối QR phải có hiệu ứng hover');

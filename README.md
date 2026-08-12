@@ -1,6 +1,18 @@
-# Cây Gia Phả Web v1.0.28
+# Cây Gia Phả Web v1.0.29
 
-Bản v1.0.28 tập trung vào **popup gọn đẹp, bố cục nhiều vợ/chồng theo nhánh con và giao diện toàn chiều rộng**. Dữ liệu v1.0.27 được nâng cấp trực tiếp, không cần tạo lại database.
+Bản v1.0.29 tập trung vào **ổn định vị trí nội dung quản trị, tối giản khối QR ủng hộ và tách Gallery khỏi gói backup để dữ liệu ảnh lớn dễ quản lý hơn**. Dữ liệu v1.0.28 được nâng cấp trực tiếp, không cần tạo lại database.
+
+## Cập nhật v1.0.29
+
+- Toàn bộ trang Admin và nội dung các tab Cài đặt luôn **bắt đầu từ phía trên vùng làm việc**, không còn căn giữa theo chiều dọc khi nội dung ngắn. Khi đổi menu/tab, trang được đưa về đầu và hiệu ứng tab gây nhảy vị trí đã được bỏ.
+- Phần QR ủng hộ **bỏ trường “Tiêu đề” và không hiển thị tiêu đề riêng trên trang công khai**. QR được tăng kích thước trên desktop và vẫn tự co hợp lý trên điện thoại.
+- Gói backup `.gpbak` từ v1.0.29 **không chứa `data/uploads/gallery/`**. Gallery phải được sao lưu riêng bằng cách copy thư mục này; nhờ vậy backup hệ thống nhỏ hơn và không bị phình theo số lượng ảnh.
+- Khi restore `.gpbak` v1.0.29, thư mục Gallery hiện có được **giữ nguyên**, không bị xóa/thay thế. Backup cũ nếu thực sự có Gallery vẫn được nhận diện tương thích.
+- Có thể copy trực tiếp các thư mục ảnh vào `data/uploads/gallery/<tên thư mục>/`. Website tự quét thư mục, tự tạo album công khai cho thư mục chưa có trong database và tự nhận ảnh `.png/.jpg/.jpeg/.webp`, kể cả tên tiếng Việt, dấu và khoảng trắng.
+- Đồng bộ Gallery từ filesystem là kiểu **bổ sung, không tự xóa metadata** khi file đang tạm thời thiếu; thao tác xóa album/ảnh nên thực hiện trong Admin để tránh mất thông tin khi đang copy/khôi phục thủ công.
+- Bổ sung regression test v1.0.29 cho căn top Admin, QR, backup loại Gallery, restore giữ Gallery và tự nhận thư mục/ảnh copy thủ công.
+
+> **Lưu ý quan trọng:** các mô tả backup ở phần lịch sử phiên bản cũ bên dưới phản ánh hành vi tại thời điểm phiên bản đó phát hành. Từ **v1.0.29**, `data/uploads/gallery/` được tách khỏi `.gpbak` và phải sao lưu riêng.
 
 ## Cập nhật v1.0.28
 
@@ -185,7 +197,7 @@ Website gia phả độc lập được xây dựng dựa trên tinh thần hi�
   - `editor`: thêm/sửa/xóa dữ liệu cá thể và Chi / nhánh.
   - `viewer`: đăng nhập quản trị nhưng chỉ xem.
 - Bảo mật: session server-side, cookie HttpOnly/SameSite, CSRF, password scrypt, rate-limit login/comment, CSP/security headers, query SQLite tham số hóa, kiểm tra ảnh bằng magic bytes, audit log.
-- Sao lưu/khôi phục **toàn bộ thư mục `data/` bằng gói `.gpbak` mã hóa mật khẩu**, xuất GEDCOM 7 cơ bản, và **in/xuất SVG cây gia phả khổ lớn theo toàn cây hoặc từng Chi**.
+- Sao lưu/khôi phục **dữ liệu hệ thống trong `data/` bằng gói `.gpbak` mã hóa mật khẩu, ngoại trừ `data/uploads/gallery/`**, xuất GEDCOM 7 cơ bản, và **in/xuất SVG cây gia phả khổ lớn theo toàn cây hoặc từng Chi**.
 - Không dùng thư viện npm bên ngoài: chạy bằng Node.js 22.5+ và `node:sqlite`.
 
 
@@ -193,13 +205,15 @@ Website gia phả độc lập được xây dựng dựa trên tinh thần hi�
 
 Vào **Quản trị → Cài đặt → Sao lưu & khôi phục dữ liệu**.
 
-- **Xuất bản sao lưu**: nhập mật khẩu hai lần rồi tải tệp `gia-pha-data-YYYY-MM-DD.gpbak`. Tệp là một gói mã hóa của toàn bộ thư mục `data/`, không còn là JSON.
+- **Xuất bản sao lưu**: nhập mật khẩu hai lần rồi tải tệp `gia-pha-data-YYYY-MM-DD.gpbak`. Tệp mã hóa chứa database và dữ liệu hệ thống trong `data/`, **không chứa `data/uploads/gallery/`**.
+- **Sao lưu Gallery riêng**: định kỳ copy toàn bộ thư mục `data/uploads/gallery/` sang ổ đĩa/NAS/cloud backup khác. Đây là phần người quản trị tự sao lưu vì có thể rất lớn.
 - **Mật khẩu backup**: tối thiểu 8 ký tự, nên dùng từ 12 ký tự trở lên. Hệ thống **không lưu mật khẩu** và không có chức năng lấy lại mật khẩu backup. Hãy lưu mật khẩu ở nơi an toàn cùng quy trình quản lý backup của bạn.
-- **Khôi phục dữ liệu**: chọn tệp `.gpbak` do v1.0.16 trở lên tạo, nhập đúng mật khẩu, đọc cảnh báo, xác nhận và nhập `KHOI PHUC`. Toàn bộ thư mục `data/` hiện tại sẽ được thay thế, không merge.
+- **Khôi phục dữ liệu**: chọn tệp `.gpbak`, nhập đúng mật khẩu, đọc cảnh báo, xác nhận và nhập `KHOI PHUC`. Dữ liệu hệ thống được thay thế theo backup; **Gallery đang có trên máy được giữ nguyên** nếu gói backup không chứa Gallery.
+- Backup `.gpbak` cũ có chứa Gallery vẫn được nhận diện để tương thích. Với backup v1.0.29 trở lên, hãy khôi phục `.gpbak` và copy thư mục Gallery riêng về `data/uploads/gallery/`. Website sẽ tự nhận các thư mục/ảnh copy trực tiếp.
 - Trước khi thay dữ liệu, hệ thống giải mã vào vùng tạm và kiểm tra toàn vẹn SQLite cũng như tài khoản admin. Sai mật khẩu, file bị sửa/hỏng hoặc backup không còn admin hoạt động đều bị từ chối.
-- Gói backup chứa dữ liệu riêng tư, tài khoản, mã băm mật khẩu, ảnh và mọi tệp khác trong `data/`. Dù đã được mã hóa, vẫn nên lưu file backup ở nơi an toàn và dùng HTTPS nếu quản trị website từ xa.
+- Gói backup vẫn chứa dữ liệu riêng tư, tài khoản và mã băm mật khẩu. Dù đã được mã hóa, vẫn nên lưu file backup ở nơi an toàn và dùng HTTPS nếu quản trị website từ xa.
 - Mặc định giao diện restore nhận tệp tối đa **1 GB**. Có thể thay bằng biến môi trường `MAX_BACKUP_MB` (64–4096 MB) nếu cần.
-- Các file backup JSON của v1.0.14–v1.0.15 là định dạng cũ; v1.0.16 chuyển sang `.gpbak` để sao lưu trực tiếp thư mục data theo yêu cầu mới.
+- Các file backup JSON của v1.0.14–v1.0.15 là định dạng cũ; `.gpbak` được dùng từ v1.0.16. **Quy tắc loại Gallery khỏi `.gpbak` áp dụng từ v1.0.29.**
 
 ## Chạy nhanh trên Windows
 
@@ -263,7 +277,7 @@ Bản mặc định ưu tiên chạy local. Khi triển khai public:
 2. Đặt `COOKIE_SECURE=1`.
 3. Nếu reverse proxy của bạn kiểm soát `X-Forwarded-For`, đặt `TRUST_PROXY=1`.
 4. Chỉ expose cổng reverse proxy; không mở trực tiếp SQLite/data directory.
-5. Sao lưu định kỳ thư mục `data/`.
+5. Sao lưu định kỳ bằng `.gpbak` **và sao lưu riêng `data/uploads/gallery/`**.
 6. Hạn chế quyền đọc file cho user chạy tiến trình Node.
 
 ## Cấu trúc
@@ -288,7 +302,7 @@ gia-pha-web/
 │     ├─ Logo/               # Logo website
 │     ├─ qrcode/             # QR ủng hộ
 │     ├─ profiles/           # Ảnh đại diện cá thể
-│     └─ gallery/            # Mỗi album có một thư mục con riêng
+│     └─ gallery/            # Gallery: tự nhận thư mục/ảnh copy tay; backup riêng ngoài .gpbak
 └─ docs/
    ├─ SECURITY.md
    └─ REFERENCES.md
@@ -334,4 +348,4 @@ Khi nâng cấp từ v1.0.3 bằng hotfix, bảng `branches` được tạo tự
 
 ## Docker / Container
 
-Bản Docker-ready tương ứng được đóng gói riêng trong `cay-gia-pha-web-v1.0.28-docker.zip`, kèm `Dockerfile`, Compose và Portainer Stack.
+Bản Docker-ready tương ứng được đóng gói riêng trong `cay-gia-pha-web-v1.0.29-docker.zip`, kèm `Dockerfile`, Compose và Portainer Stack.

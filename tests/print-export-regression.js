@@ -28,7 +28,7 @@ assert.match(printJs,/footer_author_text/,'Bản in phải đặt nội dung tá
 assert.match(printJs,/age_bands/,'Bản in phải có thống kê tuổi như trang web');
 assert.match(printCss,/@media print/,'Phải có CSS in chuyên dụng');
 assert.match(printJs,/@page\{size:/,'Khổ giấy in phải được tạo theo kích thước bạt người dùng nhập');
-assert.match(admin,/tất cả ảnh\/logo đã tải lên/,'Giao diện backup phải nói rõ ảnh được sao lưu');
+assert.match(admin,/Thư viện ảnh data\/uploads\/gallery không được đóng gói/,'Giao diện backup phải nói rõ Gallery được sao lưu riêng');
 assert.match(db,/requiredUploads/,'Restore phải kiểm tra đủ ảnh đang được dữ liệu tham chiếu');
 
 const fakeEl=()=>({addEventListener(){},classList:{add(){},remove(){}},style:{setProperty(){}},setAttribute(){},appendChild(){},innerHTML:'',textContent:'',value:'',href:''});

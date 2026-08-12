@@ -10,7 +10,7 @@ const { URL } = require('node:url');
 // Load .env before lib/db so DATA_DIR can also be configured outside Docker.
 loadDotEnv(path.join(__dirname, '.env'));
 
-const { Store, DATA_DIR, UPLOAD_DIR, UPLOAD_LAYOUT, uuid, normalizeUploadPath, uploadUrl, uploadFullPath } = require('./lib/db');
+const { Store, DATA_DIR, UPLOAD_DIR, UPLOAD_LAYOUT, uuid, safeUploadSegment, normalizeUploadPath, uploadUrl, uploadFullPath } = require('./lib/db');
 const { createEncryptedBackup, decryptBackupToDirectory, inspectBackupFile, validateBackupPassword } = require('./lib/data-backup');
 const { randomToken, sha256, verifyPassword, parseCookies, cookie, safeEqualText } = require('./lib/security');
 
@@ -169,10 +169,12 @@ async function handleApi(req, res, url) {
     });
   }
   if (method === 'GET' && pathname === '/api/public/gallery') {
+    store.syncGalleryFromFilesystem();
     return json(res, 200, { settings: publicSettings(store.settings()), albums: store.listGalleryAlbums({ publicOnly:true }), videos: store.listGalleryVideos({ publicOnly:true }) });
   }
   const publicGalleryMatch = pathname.match(/^\/api\/public\/gallery\/([^/]+)$/);
   if (method === 'GET' && publicGalleryMatch) {
+    store.syncGalleryFromFilesystem();
     const album = store.getGalleryAlbum(publicGalleryMatch[1], { publicOnly:true });
     if (!album) return json(res, 404, { error:'Không tìm thấy thư mục ảnh công khai này.' });
     return json(res, 200, { album, photos: store.listGalleryPhotos(album.id, { publicOnly:true }) });
@@ -267,6 +269,7 @@ async function handleApi(req, res, url) {
 
     if (method === 'GET' && pathname === '/api/admin/gallery') {
       if (!canManageGallery(actor)) return forbidden(res);
+      store.syncGalleryFromFilesystem();
       return json(res, 200, { albums: store.listGalleryAlbums({ publicOnly:false }), videos: store.listGalleryVideos({ publicOnly:false }), can_delete: actor.role === 'admin' });
     }
     if (method === 'POST' && pathname === '/api/admin/gallery/albums') {
@@ -293,6 +296,7 @@ async function handleApi(req, res, url) {
     const galleryPhotosMatch = pathname.match(/^\/api\/admin\/gallery\/albums\/([^/]+)\/photos$/);
     if (galleryPhotosMatch && method === 'GET') {
       if (!canManageGallery(actor)) return forbidden(res);
+      store.syncGalleryFromFilesystem();
       const album=store.getGalleryAlbum(galleryPhotosMatch[1]);
       if(!album)return json(res,404,{error:'Không tìm thấy thư mục ảnh.'});
       return json(res,200,{album,photos:store.listGalleryPhotos(album.id),can_delete:actor.role==='admin'});
@@ -455,7 +459,7 @@ async function handleApi(req, res, url) {
         const password = validateBackupPassword(String(body.password || ''));
         snapshot = store.createDataSnapshot();
         await createEncryptedBackup(snapshot.dataDir, password, backupFile);
-        store.audit(actor.id, 'backup.export', 'backup', null, JSON.stringify({ mode:'data-folder-encrypted' }));
+        store.audit(actor.id, 'backup.export', 'backup', null, JSON.stringify({ mode:'data-folder-encrypted', gallery_excluded:true }));
         if (snapshot?.holder) { fs.rmSync(snapshot.holder, { recursive:true, force:true }); snapshot = null; }
         return downloadFileAndDelete(res, backupFile, 'application/octet-stream', `gia-pha-data-${dateStamp()}.gpbak`);
       } catch (e) {
@@ -605,7 +609,8 @@ function serveStatic(res, pathname) {
   });
 }
 function serveUpload(res, pathname) {
-  const rel=normalizeUploadPath(pathname.slice('/uploads/'.length));
+  let requested=''; try{requested=decodeURIComponent(pathname.slice('/uploads/'.length));}catch{return text404(res);}
+  const rel=normalizeUploadPath(requested);
   if(!rel)return text404(res);
   const allowed=[`${UPLOAD_LAYOUT.logo}/`,`${UPLOAD_LAYOUT.qrcode}/`,`${UPLOAD_LAYOUT.profiles}/`,`${UPLOAD_LAYOUT.gallery}/`,`${UPLOAD_LAYOUT.contacts}/`,`${UPLOAD_LAYOUT.temple}/`,`${UPLOAD_LAYOUT.richtext}/`];
   if(!allowed.some((prefix)=>rel.startsWith(prefix)))return text404(res);
@@ -617,7 +622,7 @@ function text404(res){ res.statusCode=404; res.setHeader('Content-Type','text/pl
 
 function safeUploadDir(relativeDir) {
   const rel=String(relativeDir||'').replace(/\\/g,'/').replace(/^\/+|\/+$/g,'');
-  if(!rel||rel.includes('..')||rel.split('/').some((part)=>!part||!/^[A-Za-z0-9._-]+$/.test(part)))throw new Error('Thư mục upload không hợp lệ.');
+  if(!rel||rel.split('/').some((part)=>!safeUploadSegment(part)))throw new Error('Thư mục upload không hợp lệ.');
   const full=path.resolve(UPLOAD_DIR,...rel.split('/')),root=path.resolve(UPLOAD_DIR)+path.sep;
   if(!full.startsWith(root))throw new Error('Thư mục upload không hợp lệ.');
   fs.mkdirSync(full,{recursive:true}); return {rel,full};
@@ -650,7 +655,7 @@ function moveImageFile(filePath,targetDir,preferredName=''){
   fs.renameSync(source,dest); return `${dir.rel}/${filename}`;
 }
 function deleteGalleryAlbumFolder(storageFolder){
-  const folder=String(storageFolder||''); if(!/^[A-Za-z0-9._-]+$/.test(folder))return;
+  const folder=String(storageFolder||''); if(!safeUploadSegment(folder))return;
   const target=path.join(UPLOAD_DIR,UPLOAD_LAYOUT.gallery,folder); try{fs.rmSync(target,{recursive:true,force:true});}catch{}
 }
 function isValidImageMagic(buf,mime){ if(mime==='image/png') return buf.subarray(0,8).equals(Buffer.from([137,80,78,71,13,10,26,10])); if(mime==='image/jpeg') return buf[0]===0xff&&buf[1]===0xd8&&buf[buf.length-2]===0xff&&buf[buf.length-1]===0xd9; if(mime==='image/webp') return buf.toString('ascii',0,4)==='RIFF'&&buf.toString('ascii',8,12)==='WEBP'; return false; }
@@ -676,7 +681,7 @@ function collectRichImagePaths(value){const out=new Set();for(const item of pars
 function collectRichImagePathsFromSettings(settings){const out=new Set();for(const key of RICH_SETTING_KEYS)for(const rel of collectRichImagePaths(settings?.[key]))out.add(rel);return out;}
 function materializeRichImages(value,createdFiles){const items=parseRichArray(value),out=[];for(const item of items.slice(0,800)){if(!item||typeof item!=='object')continue;if(item.type==='image'){let rel=normalizeUploadPath(item.image_path);if(item.image_data){rel=writeImageData(item.image_data,UPLOAD_LAYOUT.richtext);createdFiles.push(rel);}if(!rel||!rel.startsWith(`${UPLOAD_LAYOUT.richtext}/`))continue;out.push({type:'image',image_path:rel,alt:String(item.alt||'').slice(0,240),width:[25,33,50,66,75,100].includes(Number(item.width))?Number(item.width):100,align:['left','center','right','justify'].includes(String(item.align||''))?String(item.align):'center'});continue;}out.push(item);}return JSON.stringify(out);}
 function publicRichContent(value){const out=[];for(const item of parseRichArray(value).slice(0,800)){if(item?.type==='image'){const rel=normalizeUploadPath(item.image_path);if(!rel||!rel.startsWith(`${UPLOAD_LAYOUT.richtext}/`))continue;const copy={...item,image_url:uploadUrl(rel)||''};delete copy.image_path;out.push(copy);}else out.push(item);}return JSON.stringify(out);}
-function publicSettings(s){ const templePaths=[...new Set([...settingPathArray(s.contact_temple_image_paths), ...(s.contact_temple_image_path?[s.contact_temple_image_path]:[])])].map(normalizeUploadPath).filter((p)=>p&&p.startsWith(`${UPLOAD_LAYOUT.temple}/`)).slice(0,10); const templeUrls=templePaths.map(uploadUrl).filter(Boolean); return { tree_title:s.tree_title, tree_subtitle:s.tree_subtitle, tree_subtitle_content:publicRichContent(s.tree_subtitle_content||'[]'), clan_name:s.clan_name, tree_footer_content:publicRichContent(s.tree_footer_content||'[]'), gallery_intro_content:publicRichContent(s.gallery_intro_content||'[]'), gallery_footer_content:publicRichContent(s.gallery_footer_content||'[]'), public_comments_enabled:s.public_comments_enabled, accent_theme:s.accent_theme, tree_font:s.tree_font||'system', tree_title_font_size:s.tree_title_font_size||'28', clan_name_font_size:s.clan_name_font_size||'66', logo_url:s.site_logo_path?(uploadUrl(s.site_logo_path)||'/assets/logo.png'):'/assets/logo.png', fund_support_enabled:s.fund_support_enabled||'0', fund_support_title:s.fund_support_title||'', fund_support_title_font_size:s.fund_support_title_font_size||'28', fund_support_content:publicRichContent(s.fund_support_content||'[]'), fund_support_qr_url:s.fund_support_qr_path?(uploadUrl(s.fund_support_qr_path)||''):'', footer_author_text:s.footer_author_text||'', footer_author_content:publicRichContent(s.footer_author_content||'[]'), footer_author_font:s.footer_author_font||'system', contact_intro_content:publicRichContent(s.contact_intro_content||'[]'), contact_footer_content:publicRichContent(s.contact_footer_content||'[]'), contact_map_url:s.contact_map_url||'', contact_map_address_content:publicRichContent(s.contact_map_address_content||'[]'), contact_temple_image_urls:templeUrls, contact_temple_image_url:templeUrls[0]||'', welcome_popup_enabled:s.welcome_popup_enabled||'0', welcome_popup_content:publicRichContent(s.welcome_popup_content||'[]') }; }
+function publicSettings(s){ const templePaths=[...new Set([...settingPathArray(s.contact_temple_image_paths), ...(s.contact_temple_image_path?[s.contact_temple_image_path]:[])])].map(normalizeUploadPath).filter((p)=>p&&p.startsWith(`${UPLOAD_LAYOUT.temple}/`)).slice(0,10); const templeUrls=templePaths.map(uploadUrl).filter(Boolean); return { tree_title:s.tree_title, tree_subtitle:s.tree_subtitle, tree_subtitle_content:publicRichContent(s.tree_subtitle_content||'[]'), clan_name:s.clan_name, tree_footer_content:publicRichContent(s.tree_footer_content||'[]'), gallery_intro_content:publicRichContent(s.gallery_intro_content||'[]'), gallery_footer_content:publicRichContent(s.gallery_footer_content||'[]'), public_comments_enabled:s.public_comments_enabled, accent_theme:s.accent_theme, tree_font:s.tree_font||'system', tree_title_font_size:s.tree_title_font_size||'28', clan_name_font_size:s.clan_name_font_size||'66', logo_url:s.site_logo_path?(uploadUrl(s.site_logo_path)||'/assets/logo.png'):'/assets/logo.png', fund_support_enabled:s.fund_support_enabled||'0', fund_support_content:publicRichContent(s.fund_support_content||'[]'), fund_support_qr_url:s.fund_support_qr_path?(uploadUrl(s.fund_support_qr_path)||''):'', footer_author_text:s.footer_author_text||'', footer_author_content:publicRichContent(s.footer_author_content||'[]'), footer_author_font:s.footer_author_font||'system', contact_intro_content:publicRichContent(s.contact_intro_content||'[]'), contact_footer_content:publicRichContent(s.contact_footer_content||'[]'), contact_map_url:s.contact_map_url||'', contact_map_address_content:publicRichContent(s.contact_map_address_content||'[]'), contact_temple_image_urls:templeUrls, contact_temple_image_url:templeUrls[0]||'', welcome_popup_enabled:s.welcome_popup_enabled||'0', welcome_popup_content:publicRichContent(s.welcome_popup_content||'[]') }; }
 function friendlyDbError(e){ const m=String(e?.message||e); if(m.includes('UNIQUE constraint failed: users.username'))return 'Username đã tồn tại.'; return m.slice(0,500); }
 function dateStamp(){ return new Date().toISOString().slice(0,10); }
 function strongHumanPassword(){ return `GiaPha-${randomToken(9)}-7a!`; }

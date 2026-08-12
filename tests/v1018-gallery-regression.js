@@ -56,7 +56,7 @@ try{
   const restored=store.restoreDataDirectory(snapshot.dataDir,admin.id,null);
   assert.equal(restored.ok,true);assert.equal(store.getGalleryAlbum(album.id).title,'Lễ giỗ Tổ','Restore data-folder phải khôi phục dữ liệu Gallery');
   assert.equal(store.listGalleryPhotos(album.id).length,2,'Restore phải khôi phục danh sách ảnh Gallery');
-  assert.equal(fs.existsSync(uploadFile),true,'Restore phải khôi phục tệp ảnh Gallery trong đúng thư mục album');
+  assert.equal(fs.existsSync(uploadFile),false,'Gallery không nằm trong .gpbak; tệp đã xóa sau backup không được tự khôi phục và phải được người dùng backup riêng');
   store.updateGalleryAlbum(album.id,{is_public:false},viewer.id);
   assert.equal(store.listGalleryAlbums({publicOnly:true}).length,0,'Album ẩn không được xuất hiện công khai');
   store.updateGalleryPhoto(photo2.id,{caption:'Đã cập nhật'},viewer.id);
