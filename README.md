@@ -1,8 +1,8 @@
-# Cây Gia Phả Web v1.0.37
+# Cây Gia Phả Web v1.0.38
 
-Bản v1.0.37 nâng cấp toàn bộ trình soạn thảo Rich Text/HTML trong Admin: ảnh có thể chọn kích thước từ 5% đến 100% theo bước 5%, bổ sung công cụ bảng và bộ định dạng nội dung đầy đủ hơn. Dữ liệu Rich Text cũ vẫn tương thích và tự chuyển sang HTML an toàn khi được sửa/lưu lại. Có thể nâng trực tiếp từ v1.0.37, không cần tạo lại database.
+Bản v1.0.38 nâng cấp toàn bộ trình soạn thảo Rich Text/HTML trong Admin: ảnh có thể chọn kích thước từ 5% đến 100% theo bước 5%, bổ sung công cụ bảng và bộ định dạng nội dung đầy đủ hơn. Dữ liệu Rich Text cũ vẫn tương thích và tự chuyển sang HTML an toàn khi được sửa/lưu lại. Có thể nâng trực tiếp từ v1.0.38, không cần tạo lại database.
 
-## Cập nhật v1.0.37
+## Cập nhật v1.0.38
 
 - Ảnh chèn trong Rich Text và Tin tức có 20 mức kích thước: 5%, 10%, 15% … 95%, 100%; hỗ trợ căn trái/giữa/phải và mô tả ảnh.
 - Rich Text Admin bổ sung undo/redo, H2/H3/H4, danh sách, thụt lề, liên kết, đường phân cách và bảng.
@@ -413,4 +413,4 @@ Khi nâng cấp từ v1.0.3 bằng hotfix, bảng `branches` được tạo tự
 
 ## Docker / Container
 
-Bản Docker-ready tương ứng được đóng gói riêng trong `cay-gia-pha-web-v1.0.37-docker.zip`, kèm `Dockerfile`, Compose và Portainer Stack.
+Bản Docker-ready tương ứng được đóng gói riêng trong `cay-gia-pha-web-v1.0.38-docker.zip`, kèm `Dockerfile`, Compose và Portainer Stack.

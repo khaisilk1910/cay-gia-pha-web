@@ -6,7 +6,7 @@ const assert=require('node:assert/strict');
 const root=path.join(__dirname,'..');
 const read=f=>fs.readFileSync(path.join(root,f),'utf8');
 const pkg=require(path.join(root,'package.json'));
-assert.equal(pkg.version,'1.0.37');
+assert.equal(pkg.version,'1.0.38');
 const db=read('lib/db.js'),server=read('server.js'),admin=read('public/admin.js'),index=read('public/index.html');
 assert.match(db,/link_preview_title:\s*'Cây Gia Phả'/,'Phải có tiêu đề xem trước mặc định');
 assert.match(db,/link_preview_description:/,'Phải có mô tả xem trước mặc định');
