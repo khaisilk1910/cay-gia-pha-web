@@ -2,7 +2,7 @@
   --paper:#f7f4ec;--paper-2:#fffdfa;--ink:#1f2a2a;--muted:#74736d;--line:#d8d0bf;--gold:#a9854a;
   --male:#567e96;--female:#a97887;--other:#7b7295;--success:#39775a;--danger:#a84b4b;--navy:#223b43;
   --shadow:0 20px 60px rgba(44,42,33,.10);--shadow-soft:0 8px 28px rgba(44,42,33,.09);--radius:22px;
-  --serif:Georgia,"Noto Serif","DejaVu Serif","Liberation Serif","Times New Roman",serif;--sans:ui-sans-serif,system-ui,-apple-system,"Segoe UI","Noto Sans","DejaVu Sans","Liberation Sans",Arial,sans-serif;
+  --serif:"Noto Serif","DejaVu Serif","Liberation Serif","Times New Roman",serif;--sans:ui-sans-serif,system-ui,-apple-system,"Segoe UI","Noto Sans","DejaVu Sans","Liberation Sans",Arial,sans-serif;
 }
 *{box-sizing:border-box}html{scroll-behavior:smooth}body{margin:0;font-family:var(--sans);color:var(--ink);background:var(--paper);min-height:100vh}button,input,textarea,select{font:inherit}button,a{ -webkit-tap-highlight-color:transparent}button{color:inherit}.hidden{display:none!important}
 body:before{content:"";position:fixed;inset:0;pointer-events:none;background-image:radial-gradient(circle at 20% 20%,rgba(169,133,74,.045) 0 1px,transparent 1px);background-size:18px 18px;z-index:-3}.ambient{position:fixed;border-radius:999px;filter:blur(90px);opacity:.26;z-index:-2;pointer-events:none}.ambient-a{width:420px;height:420px;background:#e8d8ba;top:-180px;left:-100px}.ambient-b{width:460px;height:460px;background:#cbdde0;right:-220px;top:240px}
@@ -27,17 +27,27 @@ main{max-width:1500px;margin:auto;padding:0 28px 50px}.hero{text-align:center;pa
 @media(max-width:700px){.branch-switcher{order:2;flex:1;min-width:0;max-width:none}.branch-switcher-label{display:none}.generation-filter{order:4}.zoom-tools{order:3}}
 
 /* v1.0.6 - spouse roles, centered couple lines, one-child connector fix */
-:root[data-tree-font="system"]{--tree-font:ui-sans-serif,system-ui,-apple-system,"Segoe UI","Noto Sans","DejaVu Sans","Liberation Sans",Arial,sans-serif;--tree-serif:ui-serif,Georgia,"Noto Serif","DejaVu Serif","Liberation Serif","Times New Roman",serif}
+:root[data-tree-font="system"]{--tree-font:ui-sans-serif,system-ui,-apple-system,"Segoe UI","Noto Sans","DejaVu Sans","Liberation Sans",Arial,sans-serif;--tree-serif:ui-serif,"Noto Serif","DejaVu Serif","Liberation Serif","Times New Roman",serif}
 :root[data-tree-font="segoe"]{--tree-font:"Segoe UI","Noto Sans","DejaVu Sans","Liberation Sans",Arial,sans-serif;--tree-serif:"Segoe UI","Noto Sans","DejaVu Sans","Liberation Sans",Arial,sans-serif}
 :root[data-tree-font="arial"]{--tree-font:Arial,"Noto Sans","DejaVu Sans","Liberation Sans",sans-serif;--tree-serif:Arial,"Noto Sans","DejaVu Sans","Liberation Sans",sans-serif}
 :root[data-tree-font="tahoma"]{--tree-font:Tahoma,"Segoe UI","Noto Sans","DejaVu Sans","Liberation Sans",sans-serif;--tree-serif:Tahoma,"Segoe UI","Noto Sans","DejaVu Sans","Liberation Sans",sans-serif}
 :root[data-tree-font="verdana"]{--tree-font:Verdana,"Noto Sans","DejaVu Sans","Liberation Sans",sans-serif;--tree-serif:Verdana,"Noto Sans","DejaVu Sans","Liberation Sans",sans-serif}
-:root[data-tree-font="georgia"]{--tree-font:Georgia,"Noto Serif","DejaVu Serif","Liberation Serif","Times New Roman",serif;--tree-serif:Georgia,"Noto Serif","DejaVu Serif","Liberation Serif","Times New Roman",serif}
-:root[data-tree-font="times"]{--tree-font:"Times New Roman","Noto Serif","DejaVu Serif","Liberation Serif",serif;--tree-serif:"Times New Roman","Noto Serif","DejaVu Serif","Liberation Serif",serif}
-:root[data-tree-font="cambria"]{--tree-font:Cambria,"Noto Serif","DejaVu Serif","Liberation Serif",Georgia,serif;--tree-serif:Cambria,"Noto Serif","DejaVu Serif","Liberation Serif",Georgia,serif}
-:root[data-tree-font="palatino"]{--tree-font:"Palatino Linotype","Noto Serif","DejaVu Serif","Liberation Serif",Georgia,serif;--tree-serif:"Palatino Linotype","Noto Serif","DejaVu Serif","Liberation Serif",Georgia,serif}
 :root[data-tree-font="trebuchet"]{--tree-font:"Trebuchet MS","Segoe UI","Noto Sans","DejaVu Sans","Liberation Sans",Arial,sans-serif;--tree-serif:"Trebuchet MS","Segoe UI","Noto Sans","DejaVu Sans","Liberation Sans",Arial,sans-serif}
-:root:not([data-tree-font]){--tree-font:ui-sans-serif,system-ui,-apple-system,"Segoe UI","Noto Sans","DejaVu Sans","Liberation Sans",Arial,sans-serif;--tree-serif:ui-serif,Georgia,"Noto Serif","DejaVu Serif","Liberation Serif","Times New Roman",serif}
+:root[data-tree-font="calibri"]{--tree-font:Calibri,"Segoe UI","Noto Sans","DejaVu Sans","Liberation Sans",Arial,sans-serif;--tree-serif:Calibri,"Segoe UI","Noto Sans","DejaVu Sans","Liberation Sans",Arial,sans-serif}
+:root[data-tree-font="candara"]{--tree-font:Candara,"Segoe UI","Noto Sans","DejaVu Sans","Liberation Sans",Arial,sans-serif;--tree-serif:Candara,"Segoe UI","Noto Sans","DejaVu Sans","Liberation Sans",Arial,sans-serif}
+:root[data-tree-font="corbel"]{--tree-font:Corbel,"Segoe UI","Noto Sans","DejaVu Sans","Liberation Sans",Arial,sans-serif;--tree-serif:Corbel,"Segoe UI","Noto Sans","DejaVu Sans","Liberation Sans",Arial,sans-serif}
+:root[data-tree-font="helvetica"]{--tree-font:"Helvetica Neue",Helvetica,"Noto Sans","DejaVu Sans","Liberation Sans",Arial,sans-serif;--tree-serif:"Helvetica Neue",Helvetica,"Noto Sans","DejaVu Sans","Liberation Sans",Arial,sans-serif}
+:root[data-tree-font="roboto"]{--tree-font:Roboto,"Noto Sans","DejaVu Sans","Liberation Sans",Arial,sans-serif;--tree-serif:Roboto,"Noto Sans","DejaVu Sans","Liberation Sans",Arial,sans-serif}
+:root[data-tree-font="noto_sans"]{--tree-font:"Noto Sans","DejaVu Sans","Liberation Sans",Arial,sans-serif;--tree-serif:"Noto Sans","DejaVu Sans","Liberation Sans",Arial,sans-serif}
+:root[data-tree-font="dejavu_sans"]{--tree-font:"DejaVu Sans","Noto Sans","Liberation Sans",Arial,sans-serif;--tree-serif:"DejaVu Sans","Noto Sans","Liberation Sans",Arial,sans-serif}
+:root[data-tree-font="liberation_sans"]{--tree-font:"Liberation Sans","Noto Sans","DejaVu Sans",Arial,sans-serif;--tree-serif:"Liberation Sans","Noto Sans","DejaVu Sans",Arial,sans-serif}
+:root[data-tree-font="times"]{--tree-font:"Times New Roman","Noto Serif","DejaVu Serif","Liberation Serif",serif;--tree-serif:"Times New Roman","Noto Serif","DejaVu Serif","Liberation Serif",serif}
+:root[data-tree-font="cambria"]{--tree-font:Cambria,"Noto Serif","DejaVu Serif","Liberation Serif","Times New Roman",serif;--tree-serif:Cambria,"Noto Serif","DejaVu Serif","Liberation Serif","Times New Roman",serif}
+:root[data-tree-font="palatino"]{--tree-font:"Palatino Linotype","Noto Serif","DejaVu Serif","Liberation Serif","Times New Roman",serif;--tree-serif:"Palatino Linotype","Noto Serif","DejaVu Serif","Liberation Serif","Times New Roman",serif}
+:root[data-tree-font="noto_serif"]{--tree-font:"Noto Serif","DejaVu Serif","Liberation Serif","Times New Roman",serif;--tree-serif:"Noto Serif","DejaVu Serif","Liberation Serif","Times New Roman",serif}
+:root[data-tree-font="dejavu_serif"]{--tree-font:"DejaVu Serif","Noto Serif","Liberation Serif","Times New Roman",serif;--tree-serif:"DejaVu Serif","Noto Serif","Liberation Serif","Times New Roman",serif}
+:root[data-tree-font="liberation_serif"]{--tree-font:"Liberation Serif","Noto Serif","DejaVu Serif","Times New Roman",serif;--tree-serif:"Liberation Serif","Noto Serif","DejaVu Serif","Times New Roman",serif}
+:root:not([data-tree-font]){--tree-font:ui-sans-serif,system-ui,-apple-system,"Segoe UI","Noto Sans","DejaVu Sans","Liberation Sans",Arial,sans-serif;--tree-serif:ui-serif,"Noto Serif","DejaVu Serif","Liberation Serif","Times New Roman",serif}
 body.public-page{font-family:var(--tree-font)}
 .tree-shell,.detail-panel,.comment-panel{font-family:var(--tree-font)}
 .hero h1,.brand strong,.person-name,.detail-hero h2,.tree-empty strong{font-family:var(--tree-serif)}
@@ -415,4 +425,6 @@ body.welcome-popup-open{overflow:hidden}
   .comment-form-bottom{justify-content:flex-end}
 }
 
-/* v1.0.32 · multiline address in Phương Danh Công Đức */
+/* v1.0.33 · multiline address in Phương Danh Công Đức */
+
+/* v1.0.33 · 20 Vietnamese-safe font choices; all stacks fall back to Unicode-capable families. */

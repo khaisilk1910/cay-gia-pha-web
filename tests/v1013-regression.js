@@ -82,9 +82,9 @@ try{
   const over80=stats.age_bands.find(b=>b.min===80&&b.max===null);
   assert.ok(over80&&over80.total>=1,'Nhóm 80+ phải có dữ liệu và không chồng với 60-80');
 
-  store.updateSettings({footer_author_text:'Tác giả trang web: Gia đình A',footer_author_font:'georgia',site_logo_path:'abc.png'},actor.id);
+  store.updateSettings({footer_author_text:'Tác giả trang web: Gia đình A',footer_author_font:'noto_serif',site_logo_path:'abc.png'},actor.id);
   assert.equal(store.getSetting('footer_author_text'),'Tác giả trang web: Gia đình A');
-  assert.equal(store.getSetting('footer_author_font'),'georgia');
+  assert.equal(store.getSetting('footer_author_font'),'noto_serif');
   assert.equal(store.getSetting('site_logo_path'),'Logo/abc.png');
   store.db.close();
   console.log('v1013-regression: OK');

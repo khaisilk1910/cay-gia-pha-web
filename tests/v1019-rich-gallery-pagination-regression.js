@@ -50,13 +50,13 @@ try{
   const admin=store.ensureAdmin('admin','Regression-Password-2026!',false);
   for(const key of ['tree_subtitle_content','tree_footer_content','gallery_intro_content','gallery_footer_content','footer_author_content']) assert.equal(store.getSetting(key),'[]',`${key} phải migrate tự động với mặc định an toàn`);
   const raw=JSON.stringify([
-    {text:'Dòng đậm màu\n',bold:true,italic:true,underline:true,size:24,color:'#AABBCC',font:'georgia',align:'center'},
+    {text:'Dòng đậm màu\n',bold:true,italic:true,underline:true,size:24,color:'#AABBCC',font:'noto_serif',align:'center'},
     {text:'\u0001Dòng hai',strike:true,size:999,color:'red',font:'bad-font',align:'bad-align'},
   ]);
   const settings=store.updateSettings({tree_subtitle_content:raw,tree_footer_content:raw,gallery_intro_content:raw,gallery_footer_content:raw,footer_author_content:raw,fund_support_content:raw},admin.id);
   for(const key of ['tree_subtitle_content','tree_footer_content','gallery_intro_content','gallery_footer_content','footer_author_content','fund_support_content']){
     const tokens=JSON.parse(settings[key]);
-    assert.equal(tokens[0].bold,true);assert.equal(tokens[0].italic,true);assert.equal(tokens[0].underline,true);assert.equal(tokens[0].size,24);assert.equal(tokens[0].color,'#aabbcc');assert.equal(tokens[0].font,'georgia');assert.equal(tokens[0].align,'center');
+    assert.equal(tokens[0].bold,true);assert.equal(tokens[0].italic,true);assert.equal(tokens[0].underline,true);assert.equal(tokens[0].size,24);assert.equal(tokens[0].color,'#aabbcc');assert.equal(tokens[0].font,'noto_serif');assert.equal(tokens[0].align,'center');
     assert.equal(tokens[1].size,16,'Cỡ chữ ngoài whitelist phải về 16px');assert.equal(tokens[1].color,'','Màu không hợp lệ phải bị bỏ');assert.equal(tokens[1].font,'system','Font không hợp lệ phải về system');assert.equal(tokens[1].align,'left','Căn lề không hợp lệ phải về left');assert.ok(!tokens[1].text.includes('\u0001'),'Ký tự điều khiển phải bị loại bỏ');
   }
   const album=store.createGalleryAlbum({title:'Album 205 ảnh',is_public:true},admin.id);

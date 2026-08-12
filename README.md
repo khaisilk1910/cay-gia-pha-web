@@ -1,6 +1,14 @@
-# Cây Gia Phả Web v1.0.32
+# Cây Gia Phả Web v1.0.33
 
-Bản v1.0.32 bổ sung cột **Địa chỉ** cho Phương Danh Công Đức ở cả trang quản trị và trang công khai. Địa chỉ trong Admin là ô nhập nhiều dòng, được giữ nguyên xuống dòng khi lưu/hiển thị và tự migrate từ database cũ. Có thể nâng trực tiếp từ v1.0.31, không cần tạo lại database.
+Bản v1.0.33 loại bỏ font serif gây lỗi hiển thị dấu tiếng Việt và mở rộng bộ chọn lên **20 font**. Tất cả lựa chọn đều có chuỗi fallback ưu tiên các họ font Unicode phổ biến để tránh mất dấu trên Windows, macOS, Linux, Android và iOS. Có thể nâng trực tiếp từ v1.0.32, không cần tạo lại database.
+
+## Cập nhật v1.0.33
+
+- Loại bỏ hoàn toàn font serif cũ khỏi CSS, Rich Text, cây gia phả, bản in và bộ chọn cài đặt.
+- Cung cấp đúng 20 lựa chọn font: Hệ thống / Unicode, Segoe UI, Arial, Tahoma, Verdana, Trebuchet MS, Calibri, Candara, Corbel, Helvetica Neue, Roboto, Noto Sans, DejaVu Sans, Liberation Sans, Times New Roman, Cambria, Palatino Linotype, Noto Serif, DejaVu Serif và Liberation Serif.
+- Mỗi lựa chọn có fallback Unicode để nội dung tiếng Việt có dấu vẫn hiển thị an toàn khi máy người xem không cài font chính.
+- Dữ liệu cũ sử dụng font không còn hỗ trợ sẽ tự hiển thị bằng font hệ thống, không làm lỗi nội dung.
+- Bổ sung regression test v1.0.33 kiểm tra đủ 20 font, đồng bộ Web/Docker và không còn tham chiếu tới font đã loại bỏ.
 
 ## Cập nhật v1.0.32
 
@@ -375,4 +383,4 @@ Khi nâng cấp từ v1.0.3 bằng hotfix, bảng `branches` được tạo tự
 
 ## Docker / Container
 
-Bản Docker-ready tương ứng được đóng gói riêng trong `cay-gia-pha-web-v1.0.32-docker.zip`, kèm `Dockerfile`, Compose và Portainer Stack.
+Bản Docker-ready tương ứng được đóng gói riêng trong `cay-gia-pha-web-v1.0.33-docker.zip`, kèm `Dockerfile`, Compose và Portainer Stack.
