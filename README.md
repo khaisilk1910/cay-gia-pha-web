@@ -1,6 +1,13 @@
-# Cây Gia Phả Web v1.0.31
+# Cây Gia Phả Web v1.0.32
 
-Bản v1.0.31 tập trung sửa hành vi thu gọn nhánh có Dâu/Rể và con riêng, đồng bộ khoảng cách đầu trang công khai, đồng thời làm popup thống kê và bình luận an toàn trên màn hình điện thoại nhỏ. Có thể nâng trực tiếp từ v1.0.30, không cần tạo lại database.
+Bản v1.0.32 bổ sung cột **Địa chỉ** cho Phương Danh Công Đức ở cả trang quản trị và trang công khai. Địa chỉ trong Admin là ô nhập nhiều dòng, được giữ nguyên xuống dòng khi lưu/hiển thị và tự migrate từ database cũ. Có thể nâng trực tiếp từ v1.0.31, không cần tạo lại database.
+
+## Cập nhật v1.0.32
+
+- Thêm cột **Địa chỉ** vào bảng Phương Danh Công Đức công khai, bảng Top và bảng quản trị.
+- Form thêm/sửa công đức dùng textarea Địa chỉ nhiều dòng, tối đa 3000 ký tự; chuẩn hóa CRLF về LF nhưng giữ bố cục dòng.
+- Database tự thêm cột `contributions.address` khi khởi động trên dữ liệu v1.0.31 trở xuống; backup/restore tự bao gồm cột mới.
+- Bổ sung regression test v1.0.32 cho migration, create/update/list/top và giao diện Địa chỉ.
 
 ## Cập nhật v1.0.31
 
@@ -368,4 +375,4 @@ Khi nâng cấp từ v1.0.3 bằng hotfix, bảng `branches` được tạo tự
 
 ## Docker / Container
 
-Bản Docker-ready tương ứng được đóng gói riêng trong `cay-gia-pha-web-v1.0.31-docker.zip`, kèm `Dockerfile`, Compose và Portainer Stack.
+Bản Docker-ready tương ứng được đóng gói riêng trong `cay-gia-pha-web-v1.0.32-docker.zip`, kèm `Dockerfile`, Compose và Portainer Stack.
