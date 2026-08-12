@@ -13,7 +13,7 @@ const gallery=read('public/gallery.html');
 const contact=read('public/contact.html');
 const contributions=read('public/contributions.html');
 const pkg=JSON.parse(read('package.json'));
-assert.equal(pkg.version,'1.0.36','package.json phải ở v1.0.36');
+assert.equal(pkg.version,'1.0.37','package.json phải ở v1.0.37');
 
 function contextFor(src){
   const context={console,URLSearchParams,location:{search:'',href:'http://localhost/',pathname:'/'},history:{},setInterval:()=>0,clearInterval:()=>{},fetch:()=>Promise.resolve(),window:{addEventListener:()=>{}},document:{querySelector:()=>null,querySelectorAll:()=>[],documentElement:{dataset:{},style:{setProperty:()=>{}}}},CSS:{escape:s=>String(s)}};
@@ -54,7 +54,7 @@ assert.match(app,/\$\('#openCommentsBtn'\)\?\.addEventListener/,'Binding nút he
 // All public hero sections follow the tree page top rhythm.
 assert.match(css,/\.hero,\.gallery-hero,\.contact-hero,\.contributions-hero\{padding-top:28px\}/);
 assert.match(css,/@media\(max-width:700px\)[\s\S]*\.hero,\.gallery-hero,\.contact-hero,\.contributions-hero\{padding-top:18px\}/);
-for(const html of [index,gallery,contact,contributions]) assert.match(html,/styles\.css\?v=1\.0\.36/,'Trang công khai phải dùng cache key v1.0.36');
+for(const html of [index,gallery,contact,contributions]) assert.match(html,/styles\.css\?v=1\.0\.37/,'Trang công khai phải dùng cache key v1.0.37');
 
 // Mobile stats popup uses edge insets and must not keep the old translate(-50%) geometry.
 assert.match(css,/@media\(max-width:700px\)\{[\s\S]*?\.stats-panel\{[\s\S]*?left:max\(6px,env\(safe-area-inset-left\)\);right:max\(6px,env\(safe-area-inset-right\)\);[\s\S]*?top:max\(6px,env\(safe-area-inset-top\)\);bottom:max\(6px,env\(safe-area-inset-bottom\)\);[\s\S]*?width:auto;height:auto;max-width:none;max-height:none;[\s\S]*?transform:translateY\(12px\) scale\(\.985\)/);

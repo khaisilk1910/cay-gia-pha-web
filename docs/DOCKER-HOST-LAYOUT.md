@@ -1,6 +1,6 @@
-# Chạy Cây Gia Phả Web v1.0.36 bằng Docker
+# Chạy Cây Gia Phả Web v1.0.37 bằng Docker
 
-Bản Docker v1.0.36 bao gồm đầy đủ tính năng web v1.0.36 và giữ cách lưu trên Ubuntu rõ ràng, dễ quản lý:
+Bản Docker v1.0.37 bao gồm đầy đủ tính năng web v1.0.37 và giữ cách lưu trên Ubuntu rõ ràng, dễ quản lý:
 
 ```text
 /opt/cay-gia-pha-web/
@@ -17,9 +17,9 @@ image: ghcr.io/khaisilk1910/cay-gia-pha-web:latest
 pull_policy: always
 ```
 
-Không cần `${IMAGE_TAG}`. Mỗi lần redeploy Stack, Docker Compose sẽ kiểm tra/pull image `latest`. Nếu image mới có nội dung khác, entrypoint của v1.0.36 tự cập nhật `/opt/cay-gia-pha-web/app/`; thư mục `/opt/cay-gia-pha-web/data/` không bị ghi đè.
+Không cần `${IMAGE_TAG}`. Mỗi lần redeploy Stack, Docker Compose sẽ kiểm tra/pull image `latest`. Nếu image mới có nội dung khác, entrypoint của v1.0.37 tự cập nhật `/opt/cay-gia-pha-web/app/`; thư mục `/opt/cay-gia-pha-web/data/` không bị ghi đè.
 
-> Khuyến nghị: trước mỗi lần cập nhật `latest`, nên tạo `.gpbak` từ giao diện quản trị **và sao lưu riêng `data/uploads/gallery/`**. `latest` tiện, nhưng tag cố định như `1.0.36` vẫn dễ rollback hơn.
+> Khuyến nghị: trước mỗi lần cập nhật `latest`, nên tạo `.gpbak` từ giao diện quản trị **và sao lưu riêng `data/uploads/gallery/`**. `latest` tiện, nhưng tag cố định như `1.0.37` vẫn dễ rollback hơn.
 
 ## Chuẩn bị Ubuntu
 
@@ -104,8 +104,8 @@ Khi cần phục hồi ảnh, copy các thư mục trở lại `/opt/cay-gia-pha
 ## Cách cập nhật khi dùng `latest`
 
 1. Push source mới lên GitHub.
-2. Tạo tag mới, ví dụ `v1.0.36`.
-3. GitHub Actions build/push cả `:1.0.36` và `:latest`.
+2. Tạo tag mới, ví dụ `v1.0.37`.
+3. GitHub Actions build/push cả `:1.0.37` và `:latest`.
 4. Trong Portainer mở Stack và chọn **Update the stack / Redeploy**.
 5. Vì `pull_policy: always`, image `latest` mới được pull.
 6. Khi container khởi động, entrypoint so sánh build ID. Nếu code khác, nó thay riêng `/opt/cay-gia-pha-web/app/` bằng code mới và giữ nguyên `/opt/cay-gia-pha-web/data/`.
@@ -126,10 +126,10 @@ Không dùng:
 
 ## GitHub Actions / GHCR
 
-File `.github/workflows/docker-publish.yml` đã có trong bản Docker-ready. Khi push tag `v1.0.36`, workflow tạo:
+File `.github/workflows/docker-publish.yml` đã có trong bản Docker-ready. Khi push tag `v1.0.37`, workflow tạo:
 
 ```text
-ghcr.io/khaisilk1910/cay-gia-pha-web:1.0.36
+ghcr.io/khaisilk1910/cay-gia-pha-web:1.0.37
 ghcr.io/khaisilk1910/cay-gia-pha-web:1.0
 ghcr.io/khaisilk1910/cay-gia-pha-web:latest
 ```
@@ -139,7 +139,7 @@ Nếu GHCR package là Public, Ubuntu/Portainer có thể pull trực tiếp mà
 ## Build local
 
 ```bash
-docker build --pull -t cay-gia-pha-web:1.0.36 .
+docker build --pull -t cay-gia-pha-web:1.0.37 .
 ```
 
 Chạy bằng Compose:
@@ -151,6 +151,6 @@ docker compose up -d --build
 
 ## Lưu ý về "toàn bộ file trong /opt"
 
-Với Stack v1.0.36, **mã ứng dụng Cây Gia Phả Web và toàn bộ dữ liệu của ứng dụng** đều nằm rõ ràng trong `/opt/cay-gia-pha-web/`.
+Với Stack v1.0.37, **mã ứng dụng Cây Gia Phả Web và toàn bộ dữ liệu của ứng dụng** đều nằm rõ ràng trong `/opt/cay-gia-pha-web/`.
 
 Tuy nhiên các lớp base image Node.js, metadata container, cache image và dữ liệu nội bộ của Docker Engine vẫn nằm trong `data-root` do Docker quản lý (thường là `/var/lib/docker`). Đây là cách Docker hoạt động. Nếu muốn di chuyển cả kho lưu trữ của Docker Engine sang `/opt`, phải cấu hình `data-root` của Docker daemon cho toàn server, không phải chỉ sửa Stack của một container.

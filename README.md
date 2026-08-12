@@ -1,16 +1,15 @@
-# Cây Gia Phả Web v1.0.36
+# Cây Gia Phả Web v1.0.37
 
-Bản v1.0.36 bổ sung **nội dung xem trước khi chia sẻ liên kết trang chủ** có thể chỉnh trực tiếp trong Admin. Tiêu đề, mô tả và logo được render thành metadata phía máy chủ để Zalo, Facebook, Messenger và các trình đọc Open Graph có thể lấy nội dung mà không cần chạy JavaScript. Có thể nâng trực tiếp từ v1.0.35, không cần tạo lại database.
+Bản v1.0.37 nâng cấp toàn bộ trình soạn thảo Rich Text/HTML trong Admin: ảnh có thể chọn kích thước từ 5% đến 100% theo bước 5%, bổ sung công cụ bảng và bộ định dạng nội dung đầy đủ hơn. Dữ liệu Rich Text cũ vẫn tương thích và tự chuyển sang HTML an toàn khi được sửa/lưu lại. Có thể nâng trực tiếp từ v1.0.37, không cần tạo lại database.
 
-## Cập nhật v1.0.36
+## Cập nhật v1.0.37
 
-- Trong **Cài đặt → Logo & riêng tư** có thêm **Tiêu đề khi chia sẻ liên kết trang chủ** và **Mô tả khi chia sẻ liên kết trang chủ**.
-- Trang chủ render trực tiếp `title`, `meta description`, Open Graph (`og:title`, `og:description`, `og:url`, `og:image`) và Twitter Card từ cài đặt hiện tại.
-- Ảnh xem trước sử dụng logo website đang cấu hình; nếu chưa có logo riêng sẽ dùng logo mặc định.
-- Metadata được escape an toàn khi có ký tự đặc biệt tiếng Việt, `&`, `<`, `>` hoặc dấu nháy.
-- Hai cài đặt mới được lưu trong bảng `settings`, tự xuất hiện trên database cũ và được bao gồm trong backup/restore hiện có.
-- Bổ sung regression test v1.0.36 và smoke test thực tế cho luồng đăng nhập Admin → sửa nội dung → tải lại trang chủ → kiểm tra metadata.
-- Lưu ý: một số nền tảng nhắn tin/mạng xã hội có thể cache bản xem trước cũ trong một thời gian sau khi nội dung đã được thay đổi trên website.
+- Ảnh chèn trong Rich Text và Tin tức có 20 mức kích thước: 5%, 10%, 15% … 95%, 100%; hỗ trợ căn trái/giữa/phải và mô tả ảnh.
+- Rich Text Admin bổ sung undo/redo, H2/H3/H4, danh sách, thụt lề, liên kết, đường phân cách và bảng.
+- Bảng hỗ trợ thêm/xóa hàng, thêm/xóa cột, gộp phải/gộp dưới, tách ô, chuyển hàng thành đầu bảng, tiêu đề bảng, căn chữ, màu nền ô và chỉnh độ rộng bảng.
+- Trình soạn Tin tức dùng cùng bộ công cụ bảng và ảnh nâng cao. HTML được lọc an toàn phía server trước khi lưu.
+- Renderer công khai hỗ trợ Rich HTML và bảng responsive, đồng thời vẫn đọc đúng dữ liệu Rich Text token từ các phiên bản cũ.
+- Không dùng editor CDN bên ngoài để tránh phụ thuộc Internet và giữ khả năng chạy offline/Docker ổn định; bộ Rich Text/HTML Editor tích hợp được nâng cấp trực tiếp trong dự án.
 
 ## Cập nhật v1.0.35
 
@@ -414,4 +413,4 @@ Khi nâng cấp từ v1.0.3 bằng hotfix, bảng `branches` được tạo tự
 
 ## Docker / Container
 
-Bản Docker-ready tương ứng được đóng gói riêng trong `cay-gia-pha-web-v1.0.36-docker.zip`, kèm `Dockerfile`, Compose và Portainer Stack.
+Bản Docker-ready tương ứng được đóng gói riêng trong `cay-gia-pha-web-v1.0.37-docker.zip`, kèm `Dockerfile`, Compose và Portainer Stack.

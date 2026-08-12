@@ -6,7 +6,7 @@ const assert=require('node:assert/strict');
 const root=path.join(__dirname,'..');
 const read=f=>fs.readFileSync(path.join(root,f),'utf8');
 const pkg=require(path.join(root,'package.json'));
-assert.equal(pkg.version,'1.0.36');
+assert.equal(pkg.version,'1.0.37');
 const db=read('lib/db.js'),server=read('server.js'),html=read('public/contributions.html'),js=read('public/contributions.js'),adminHtml=read('public/admin.html'),adminJs=read('public/admin.js'),css=read('public/styles.css');
 assert.match(db,/amount_known INTEGER NOT NULL DEFAULT 1/,'DB mới phải có cờ giá trị tùy chọn');
 assert.match(db,/ALTER TABLE contributions ADD COLUMN amount_known INTEGER NOT NULL DEFAULT 1/,'DB cũ phải tự migrate amount_known');
