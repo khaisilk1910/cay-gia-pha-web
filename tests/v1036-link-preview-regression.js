@@ -1,0 +1,38 @@
+'use strict';
+const fs=require('node:fs');
+const os=require('node:os');
+const path=require('node:path');
+const assert=require('node:assert/strict');
+const root=path.join(__dirname,'..');
+const read=f=>fs.readFileSync(path.join(root,f),'utf8');
+const pkg=require(path.join(root,'package.json'));
+assert.equal(pkg.version,'1.0.36');
+const db=read('lib/db.js'),server=read('server.js'),admin=read('public/admin.js'),index=read('public/index.html');
+assert.match(db,/link_preview_title:\s*'Cây Gia Phả'/,'Phải có tiêu đề xem trước mặc định');
+assert.match(db,/link_preview_description:/,'Phải có mô tả xem trước mặc định');
+assert.match(db,/link_preview_title','link_preview_description/,'Hai trường phải được phép lưu trong settings');
+assert.match(admin,/id="set_link_preview_title"/,'Admin phải có ô sửa tiêu đề chia sẻ');
+assert.match(admin,/id="set_link_preview_description"/,'Admin phải có ô sửa mô tả chia sẻ');
+assert.match(server,/renderHomepagePreviewMeta/,'Trang chủ phải render metadata ở server');
+assert.match(server,/property="og:title"/,'Phải có Open Graph title');
+assert.match(server,/property="og:description"/,'Phải có Open Graph description');
+assert.match(server,/property="og:image"/,'Phải có Open Graph image');
+assert.match(server,/twitter:description/,'Phải có Twitter metadata');
+assert.match(index,/name="description"/,'HTML gốc vẫn phải có fallback description');
+const tmp=fs.mkdtempSync(path.join(os.tmpdir(),'gia-pha-v1036-'));
+process.env.DATA_DIR=tmp;
+let store;
+try{
+  const {Store}=require('../lib/db');
+  store=new Store();
+  assert.equal(store.getSetting('link_preview_title'),'Cây Gia Phả');
+  assert.match(store.getSetting('link_preview_description'),/thông tin các thế hệ/);
+  const adminUser=store.ensureAdmin('admin','Regression-Password-2026!',false);
+  const next=store.updateSettings({link_preview_title:'Gia Phả Tiến Tộc & Con Cháu',link_preview_description:'Thông tin dòng họ <đầy đủ> & cập nhật.'},adminUser.id);
+  assert.equal(next.link_preview_title,'Gia Phả Tiến Tộc & Con Cháu');
+  assert.equal(next.link_preview_description,'Thông tin dòng họ <đầy đủ> & cập nhật.');
+  const exported=store.exportFullBackup();
+  assert.ok(exported.tables.settings.some(r=>r.key==='link_preview_title'&&r.value==='Gia Phả Tiến Tộc & Con Cháu'),'Backup phải chứa tiêu đề xem trước');
+  assert.ok(exported.tables.settings.some(r=>r.key==='link_preview_description'),'Backup phải chứa mô tả xem trước');
+} finally {try{store?.close?.();}catch{}try{store?.db?.close?.();}catch{}fs.rmSync(tmp,{recursive:true,force:true});}
+console.log('v1036-link-preview-regression: OK');

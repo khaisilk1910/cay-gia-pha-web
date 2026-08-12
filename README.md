@@ -1,6 +1,16 @@
-# Cây Gia Phả Web v1.0.35
+# Cây Gia Phả Web v1.0.36
 
-Bản v1.0.35 hoàn thiện **Bảng vinh danh Phương Danh Công Đức**: tổng hợp đúng theo cặp **Phương danh + Địa chỉ**, hỗ trợ mở popup xem từng lần công đức khi một phương danh có từ 2 lần trở lên, và cho phép để trống giá trị công đức. Có thể nâng trực tiếp từ v1.0.34; database tự bổ sung cờ dữ liệu mới, không cần tạo lại dữ liệu.
+Bản v1.0.36 bổ sung **nội dung xem trước khi chia sẻ liên kết trang chủ** có thể chỉnh trực tiếp trong Admin. Tiêu đề, mô tả và logo được render thành metadata phía máy chủ để Zalo, Facebook, Messenger và các trình đọc Open Graph có thể lấy nội dung mà không cần chạy JavaScript. Có thể nâng trực tiếp từ v1.0.35, không cần tạo lại database.
+
+## Cập nhật v1.0.36
+
+- Trong **Cài đặt → Logo & riêng tư** có thêm **Tiêu đề khi chia sẻ liên kết trang chủ** và **Mô tả khi chia sẻ liên kết trang chủ**.
+- Trang chủ render trực tiếp `title`, `meta description`, Open Graph (`og:title`, `og:description`, `og:url`, `og:image`) và Twitter Card từ cài đặt hiện tại.
+- Ảnh xem trước sử dụng logo website đang cấu hình; nếu chưa có logo riêng sẽ dùng logo mặc định.
+- Metadata được escape an toàn khi có ký tự đặc biệt tiếng Việt, `&`, `<`, `>` hoặc dấu nháy.
+- Hai cài đặt mới được lưu trong bảng `settings`, tự xuất hiện trên database cũ và được bao gồm trong backup/restore hiện có.
+- Bổ sung regression test v1.0.36 và smoke test thực tế cho luồng đăng nhập Admin → sửa nội dung → tải lại trang chủ → kiểm tra metadata.
+- Lưu ý: một số nền tảng nhắn tin/mạng xã hội có thể cache bản xem trước cũ trong một thời gian sau khi nội dung đã được thay đổi trên website.
 
 ## Cập nhật v1.0.35
 
@@ -404,4 +414,4 @@ Khi nâng cấp từ v1.0.3 bằng hotfix, bảng `branches` được tạo tự
 
 ## Docker / Container
 
-Bản Docker-ready tương ứng được đóng gói riêng trong `cay-gia-pha-web-v1.0.35-docker.zip`, kèm `Dockerfile`, Compose và Portainer Stack.
+Bản Docker-ready tương ứng được đóng gói riêng trong `cay-gia-pha-web-v1.0.36-docker.zip`, kèm `Dockerfile`, Compose và Portainer Stack.

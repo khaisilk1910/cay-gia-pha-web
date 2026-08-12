@@ -3,7 +3,7 @@ services:
     build:
       context: .
       dockerfile: Dockerfile
-    image: cay-gia-pha-web:1.0.35
+    image: cay-gia-pha-web:1.0.36
     container_name: cay-gia-pha-web
     restart: unless-stopped
     init: true

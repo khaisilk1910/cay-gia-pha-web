@@ -57,7 +57,7 @@ const server = http.createServer(async (req, res) => {
       serveUpload(res, pathname);
       return;
     }
-    serveStatic(res, pathname);
+    serveStatic(req, res, pathname);
   } catch (error) {
     console.error(error);
     if (!res.headersSent) json(res, error.statusCode || 500, { error: error.statusCode ? error.message : 'Lỗi máy chủ nội bộ.' });
@@ -686,17 +686,43 @@ function downloadFileAndDelete(res, filePath, contentType, filename) {
     stream.pipe(res);
   } catch (error) { cleanup(); throw error; }
 }
-function serveStatic(res, pathname) {
+function serveStatic(req, res, pathname) {
   let rel = pathname === '/' ? '/index.html' : pathname;
   if (rel === '/admin') rel = '/admin.html';
   const target = path.resolve(PUBLIC_DIR, '.' + rel);
   if (!target.startsWith(PUBLIC_DIR + path.sep)) return text404(res);
   fs.stat(target, (err, stat) => {
     if (err || !stat.isFile()) return text404(res);
-    res.statusCode=200; res.setHeader('Content-Type', MIME[path.extname(target).toLowerCase()] || 'application/octet-stream');
-    res.setHeader('Cache-Control', path.extname(target)==='.html'?'no-cache':'public, max-age=3600');
+    const ext=path.extname(target).toLowerCase();
+    res.statusCode=200; res.setHeader('Content-Type', MIME[ext] || 'application/octet-stream');
+    res.setHeader('Cache-Control', ext==='.html'?'no-cache':'public, max-age=3600');
+    if(ext==='.html' && rel==='/index.html'){
+      fs.readFile(target,'utf8',(readErr,html)=>{
+        if(readErr)return text404(res);
+        res.end(renderHomepagePreviewMeta(req,html));
+      });
+      return;
+    }
     fs.createReadStream(target).pipe(res);
   });
+}
+function renderHomepagePreviewMeta(req, html){
+  const settings=store.settings();
+  const title=String(settings.link_preview_title||'Cây Gia Phả').trim().slice(0,160)||'Cây Gia Phả';
+  const description=String(settings.link_preview_description||'Cây gia phả gia đình - xem phả hệ, thông tin các thế hệ và trao đổi bình luận.').trim().slice(0,500);
+  const proto=String(req.headers['x-forwarded-proto']||'').split(',')[0].trim();
+  const scheme=/^https?$/i.test(proto)?proto.toLowerCase():(req.socket?.encrypted||COOKIE_SECURE?'https':'http');
+  const host=String(req.headers.host||'localhost').replace(/[\r\n]/g,'');
+  const origin=`${scheme}://${host}`;
+  const logoPath=settings.site_logo_path?(uploadUrl(settings.site_logo_path)||'/assets/logo.png'):'/assets/logo.png';
+  const imageUrl=`${origin}${logoPath.startsWith('/')?logoPath:`/${logoPath}`}`;
+  const pageUrl=`${origin}/`;
+  const escAttr=(value)=>String(value??'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/\"/g,'&quot;').replace(/'/g,'&#39;');
+  let out=String(html||'');
+  out=out.replace(/<title>[\s\S]*?<\/title>/i,`<title>${escAttr(title)}</title>`);
+  out=out.replace(/<meta\s+name=["']description["'][^>]*>/i,`<meta name="description" content="${escAttr(description)}">`);
+  const social=`\n  <meta property="og:type" content="website">\n  <meta property="og:locale" content="vi_VN">\n  <meta property="og:title" content="${escAttr(title)}">\n  <meta property="og:description" content="${escAttr(description)}">\n  <meta property="og:url" content="${escAttr(pageUrl)}">\n  <meta property="og:image" content="${escAttr(imageUrl)}">\n  <meta name="twitter:card" content="summary">\n  <meta name="twitter:title" content="${escAttr(title)}">\n  <meta name="twitter:description" content="${escAttr(description)}">\n  <meta name="twitter:image" content="${escAttr(imageUrl)}">`;
+  return out.replace('</head>',`${social}\n</head>`);
 }
 function serveUpload(res, pathname) {
   let requested=''; try{requested=decodeURIComponent(pathname.slice('/uploads/'.length));}catch{return text404(res);}
@@ -771,7 +797,7 @@ function collectRichImagePaths(value){const out=new Set();for(const item of pars
 function collectRichImagePathsFromSettings(settings){const out=new Set();for(const key of RICH_SETTING_KEYS)for(const rel of collectRichImagePaths(settings?.[key]))out.add(rel);return out;}
 function materializeRichImages(value,createdFiles){const items=parseRichArray(value),out=[];for(const item of items.slice(0,800)){if(!item||typeof item!=='object')continue;if(item.type==='image'){let rel=normalizeUploadPath(item.image_path);if(item.image_data){rel=writeImageData(item.image_data,UPLOAD_LAYOUT.richtext);createdFiles.push(rel);}if(!rel||!rel.startsWith(`${UPLOAD_LAYOUT.richtext}/`))continue;out.push({type:'image',image_path:rel,alt:String(item.alt||'').slice(0,240),width:[25,33,50,66,75,100].includes(Number(item.width))?Number(item.width):100,align:['left','center','right','justify'].includes(String(item.align||''))?String(item.align):'center'});continue;}out.push(item);}return JSON.stringify(out);}
 function publicRichContent(value){const out=[];for(const item of parseRichArray(value).slice(0,800)){if(item?.type==='image'){const rel=normalizeUploadPath(item.image_path);if(!rel||!rel.startsWith(`${UPLOAD_LAYOUT.richtext}/`))continue;const copy={...item,image_url:uploadUrl(rel)||''};delete copy.image_path;out.push(copy);}else out.push(item);}return JSON.stringify(out);}
-function publicSettings(s){ const templePaths=[...new Set([...settingPathArray(s.contact_temple_image_paths), ...(s.contact_temple_image_path?[s.contact_temple_image_path]:[])])].map(normalizeUploadPath).filter((p)=>p&&p.startsWith(`${UPLOAD_LAYOUT.temple}/`)).slice(0,10); const templeUrls=templePaths.map(uploadUrl).filter(Boolean); return { tree_title:s.tree_title, tree_subtitle:s.tree_subtitle, tree_subtitle_content:publicRichContent(s.tree_subtitle_content||'[]'), clan_name:s.clan_name, tree_footer_content:publicRichContent(s.tree_footer_content||'[]'), gallery_intro_content:publicRichContent(s.gallery_intro_content||'[]'), gallery_footer_content:publicRichContent(s.gallery_footer_content||'[]'), public_comments_enabled:s.public_comments_enabled, accent_theme:s.accent_theme, tree_font:s.tree_font||'system', tree_title_font_size:s.tree_title_font_size||'28', clan_name_font_size:s.clan_name_font_size||'66', logo_url:s.site_logo_path?(uploadUrl(s.site_logo_path)||'/assets/logo.png'):'/assets/logo.png', fund_support_enabled:s.fund_support_enabled||'0', fund_support_content:publicRichContent(s.fund_support_content||'[]'), fund_support_qr_url:s.fund_support_qr_path?(uploadUrl(s.fund_support_qr_path)||''):'', footer_author_text:s.footer_author_text||'', footer_author_content:publicRichContent(s.footer_author_content||'[]'), footer_author_font:s.footer_author_font||'system', contact_intro_content:publicRichContent(s.contact_intro_content||'[]'), contact_footer_content:publicRichContent(s.contact_footer_content||'[]'), contact_map_url:s.contact_map_url||'', contact_map_address_content:publicRichContent(s.contact_map_address_content||'[]'), contact_temple_image_urls:templeUrls, contact_temple_image_url:templeUrls[0]||'', welcome_popup_enabled:s.welcome_popup_enabled||'0', welcome_popup_content:publicRichContent(s.welcome_popup_content||'[]'), contribution_top_count:['5','10','15','20'].includes(String(s.contribution_top_count||''))?String(s.contribution_top_count):'10' }; }
+function publicSettings(s){ const templePaths=[...new Set([...settingPathArray(s.contact_temple_image_paths), ...(s.contact_temple_image_path?[s.contact_temple_image_path]:[])])].map(normalizeUploadPath).filter((p)=>p&&p.startsWith(`${UPLOAD_LAYOUT.temple}/`)).slice(0,10); const templeUrls=templePaths.map(uploadUrl).filter(Boolean); return { tree_title:s.tree_title, tree_subtitle:s.tree_subtitle, tree_subtitle_content:publicRichContent(s.tree_subtitle_content||'[]'), clan_name:s.clan_name, tree_footer_content:publicRichContent(s.tree_footer_content||'[]'), gallery_intro_content:publicRichContent(s.gallery_intro_content||'[]'), gallery_footer_content:publicRichContent(s.gallery_footer_content||'[]'), public_comments_enabled:s.public_comments_enabled, accent_theme:s.accent_theme, tree_font:s.tree_font||'system', tree_title_font_size:s.tree_title_font_size||'28', clan_name_font_size:s.clan_name_font_size||'66', logo_url:s.site_logo_path?(uploadUrl(s.site_logo_path)||'/assets/logo.png'):'/assets/logo.png', fund_support_enabled:s.fund_support_enabled||'0', fund_support_content:publicRichContent(s.fund_support_content||'[]'), fund_support_qr_url:s.fund_support_qr_path?(uploadUrl(s.fund_support_qr_path)||''):'', footer_author_text:s.footer_author_text||'', footer_author_content:publicRichContent(s.footer_author_content||'[]'), footer_author_font:s.footer_author_font||'system', contact_intro_content:publicRichContent(s.contact_intro_content||'[]'), contact_footer_content:publicRichContent(s.contact_footer_content||'[]'), contact_map_url:s.contact_map_url||'', contact_map_address_content:publicRichContent(s.contact_map_address_content||'[]'), contact_temple_image_urls:templeUrls, contact_temple_image_url:templeUrls[0]||'', welcome_popup_enabled:s.welcome_popup_enabled||'0', welcome_popup_content:publicRichContent(s.welcome_popup_content||'[]'), contribution_top_count:['5','10','15','20'].includes(String(s.contribution_top_count||''))?String(s.contribution_top_count):'10', link_preview_title:s.link_preview_title||'Cây Gia Phả', link_preview_description:s.link_preview_description||'Cây gia phả gia đình - xem phả hệ, thông tin các thế hệ và trao đổi bình luận.' }; }
 function friendlyDbError(e){ const m=String(e?.message||e); if(m.includes('UNIQUE constraint failed: users.username'))return 'Username đã tồn tại.'; return m.slice(0,500); }
 function dateStamp(){ return new Date().toISOString().slice(0,10); }
 function strongHumanPassword(){ return `GiaPha-${randomToken(9)}-7a!`; }

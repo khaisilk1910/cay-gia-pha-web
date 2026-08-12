@@ -25,7 +25,7 @@ const print=read('public/print.js');
 const db=read('lib/db.js');
 for(const key of keys){assert(ui.includes(key),`public-ui thiếu ${key}`);assert(app.includes(key),`app thiếu ${key}`);assert(print.includes(key),`print thiếu ${key}`);assert(db.includes(key),`db thiếu ${key}`);}
 const pkg=require(path.join(root,'package.json'));
-assert.equal(pkg.version,'1.0.35');
+assert.equal(pkg.version,'1.0.36');
 const tmp=fs.mkdtempSync(path.join(os.tmpdir(),'gia-pha-font-v1033-'));
 process.env.DATA_DIR=tmp;
 const {Store}=require('../lib/db');
@@ -47,4 +47,4 @@ try{
   assert.equal(saved[0].font,'noto_serif');
   assert.match(saved[0].text,/Tiếng Việt/);
 }finally{try{store?.close();}catch{}fs.rmSync(tmp,{recursive:true,force:true});}
-console.log('v1.0.35 Vietnamese font regression: OK');
+console.log('v1.0.36 Vietnamese font regression: OK');
